@@ -24,5 +24,5 @@ class JobSkill {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 15)
-    SkillLevel level = SkillLevel.BASICO
+    SkillLevel level = SkillLevel.BEGINNER
 }

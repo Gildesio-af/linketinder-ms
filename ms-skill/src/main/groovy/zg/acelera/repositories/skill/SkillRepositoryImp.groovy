@@ -24,8 +24,18 @@ class SkillRepositoryImp implements SkillRepository {
     }
 
     @Override
+    Optional<Skill> findByNameIgnoreCase(String name) {
+        return skillRepositoryJpa.findByNameIgnoreCase(name)
+    }
+
+    @Override
     Skill save(Skill skill) {
         return skillRepositoryJpa.save(skill)
+    }
+
+    @Override
+    boolean existsById(UUID id) {
+        return skillRepositoryJpa.existsById(id)
     }
 
     @Override
