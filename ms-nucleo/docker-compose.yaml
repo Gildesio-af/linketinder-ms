@@ -1,0 +1,49 @@
+services:
+  ms-nucleo-api:
+    container_name: ms-nucleo-api
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - '8081:8080'
+    environment:
+
+      SPRING_DATASOURCE_URL: jdbc:postgresql://nucleo-db:5432/ms_nucleo_db
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+
+      APP_JWTSECRET: ${APP_JWTSECRET}
+
+    depends_on:
+      nucleo-db:
+        condition: service_healthy
+    networks:
+      - nucleo-network
+
+  nucleo-db:
+    container_name: ms_nucleo_db
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_DB: ms_nucleo_db
+      POSTGRES_USER: ${SPRING_DATASOURCE_USERNAME}
+      POSTGRES_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+    ports:
+      - '5434:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - nucleo-network
+
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${SPRING_DATASOURCE_USERNAME} -d ms_nucleo_db" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+
+networks:
+  nucleo-network:
+    driver: bridge
