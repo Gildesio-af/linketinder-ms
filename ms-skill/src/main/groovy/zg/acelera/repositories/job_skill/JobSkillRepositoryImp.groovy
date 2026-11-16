@@ -14,7 +14,8 @@ class JobSkillRepositoryImp implements JobSkillRepository {
 
     @Override
     List<JobSkill> findByJobId(UUID jobId) {
-        return jobSkillRepositoryJpa.findByJobId(jobId)
+//        return jobSkillRepositoryJpa.findByJobSkillId(jobId)
+        return List.of()
     }
 
     @Override

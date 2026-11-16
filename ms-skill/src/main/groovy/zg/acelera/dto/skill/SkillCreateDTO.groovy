@@ -1,4 +1,4 @@
-package zg.acelera.dto
+package zg.acelera.dto.skill
 
 import jakarta.validation.constraints.NotBlank
 import zg.acelera.domain.Skill

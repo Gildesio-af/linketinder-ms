@@ -5,5 +5,4 @@ import zg.acelera.domain.JobSkill
 import zg.acelera.domain.JobSkillId
 
 interface JobSkillRepositoryJpa extends JpaRepository<JobSkill, JobSkillId> {
-    List<JobSkill> findByJobId(UUID jobId)
 }

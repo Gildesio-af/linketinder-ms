@@ -5,8 +5,8 @@ import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import zg.acelera.domain.Skill
-import zg.acelera.dto.SkillCreateDTO
-import zg.acelera.dto.SkillResponseDTO
+import zg.acelera.dto.skill.SkillCreateDTO
+import zg.acelera.dto.skill.SkillResponseDTO
 import zg.acelera.repositories.skill.SkillRepository
 import zg.acelera.utils.exception.EntityNotFoundException
 

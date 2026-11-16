@@ -1,7 +1,9 @@
 package zg.acelera.utils.exception
 
-class EntityNotFoundException extends RuntimeException {
+import org.springframework.http.HttpStatus;
+
+class EntityNotFoundException extends ApiException{
     EntityNotFoundException(String message) {
-        super(message)
+        super(message, HttpStatus.NOT_FOUND)
     }
 }
