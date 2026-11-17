@@ -6,7 +6,7 @@ class SkillResponseDTO {
     UUID id
     String name
 
-    public static SkillResponseDTO fromDomain(Skill skill) {
+    static SkillResponseDTO fromDomain(Skill skill) {
         return new SkillResponseDTO(
             id: skill.id,
             name: skill.name

@@ -2,6 +2,7 @@ package zg.acelera.repositories.user_skill
 
 import org.springframework.stereotype.Repository
 import zg.acelera.domain.UserSkill
+import zg.acelera.domain.UserSkillId
 @Repository
 class UserSkillRepositoryImp implements UserSkillRepository {
     private final UserSkillRepositoryJpa userSkillRepositoryJpa
@@ -12,8 +13,7 @@ class UserSkillRepositoryImp implements UserSkillRepository {
 
     @Override
     List<UserSkill> findByUserId(UUID userId) {
-//        return userSkillRepositoryJpa.findByUserId(userId)
-        return List.of()
+        return userSkillRepositoryJpa.findAllByIdUserId(userId)
     }
 
 
@@ -32,5 +32,3 @@ class UserSkillRepositoryImp implements UserSkillRepository {
         userSkillRepositoryJpa.deleteById(id)
     }
 }
-
-import zg.acelera.domain.UserSkillId

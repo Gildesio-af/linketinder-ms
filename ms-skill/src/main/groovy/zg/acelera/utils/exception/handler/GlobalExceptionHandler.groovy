@@ -2,6 +2,7 @@ package zg.acelera.utils.exception.handler
 
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler
@@ -33,6 +34,17 @@ class GlobalExceptionHandler {
 
         CustomError<List<Map<String, String>>> error = new CustomError<>(
                 messages,
+                request.getDescription(false),
+                HttpStatus.BAD_REQUEST)
+
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST)
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    ResponseEntity<Object> handleHttpMessageNotReadableException(
+            HttpMessageNotReadableException e, WebRequest request) {
+        CustomError<String> error = new CustomError<>(
+                e.getMessage(),
                 request.getDescription(false),
                 HttpStatus.BAD_REQUEST)
 
