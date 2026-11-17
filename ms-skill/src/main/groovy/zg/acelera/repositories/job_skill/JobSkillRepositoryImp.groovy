@@ -14,13 +14,12 @@ class JobSkillRepositoryImp implements JobSkillRepository {
 
     @Override
     List<JobSkill> findByJobId(UUID jobId) {
-//        return jobSkillRepositoryJpa.findByJobSkillId(jobId)
-        return List.of()
+        return jobSkillRepositoryJpa.findAllByIdJobId(jobId)
     }
 
     @Override
-    Optional<JobSkill> findByJobIdAndSkillId(JobSkillId JobSkillId) {
-        return jobSkillRepositoryJpa.findById(JobSkillId)
+    Optional<JobSkill> findByJobIdAndSkillId(JobSkillId id) {
+        return jobSkillRepositoryJpa.findById(id)
     }
 
     @Override
@@ -29,7 +28,7 @@ class JobSkillRepositoryImp implements JobSkillRepository {
     }
 
     @Override
-    void delete(JobSkillId JobSkillId) {
-        jobSkillRepositoryJpa.deleteById(JobSkillId)
+    void delete(JobSkillId id) {
+        jobSkillRepositoryJpa.deleteById(id)
     }
 }
