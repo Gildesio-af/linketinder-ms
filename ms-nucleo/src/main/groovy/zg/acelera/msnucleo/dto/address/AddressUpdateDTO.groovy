@@ -1,7 +1,6 @@
 package zg.acelera.msnucleo.dto.address
 
-import jakarta.validation.constraints.NotBlank
-import jakarta.validation.constraints.NotNull
+import jakarta.validation.constraints.Pattern
 import jakarta.validation.constraints.Size
 
 class AddressUpdateDTO {
@@ -22,14 +21,13 @@ class AddressUpdateDTO {
     @Size(max = 100, message = "Neighborhood must have at most 100 characters")
     String neighborhood
 
-    @NotBlank(message = "City cannot be blank")
     @Size(max = 100, message = "City must have at most 100 characters")
+    @Pattern(regexp = ".*\\S.*", message = "City cannot be blank")
     String city
 
-    @NotBlank(message = "State cannot be blank")
     @Size(max = 100, message = "State must have at most 100 characters")
+    @Pattern(regexp = ".*\\S.*", message = "State cannot be blank")
     String state
 
-    @NotNull(message = "Country id cannot be null")
     UUID countryId
 }
