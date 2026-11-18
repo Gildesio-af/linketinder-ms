@@ -9,9 +9,6 @@ class CandidateMatchResponseDTO {
     String name
     String email
     String description
-    UUID countryId
-    String countryName
-    String countryCode
     String lastName
     LocalDate birthDate
 
@@ -21,9 +18,6 @@ class CandidateMatchResponseDTO {
                 name: candidate.user.name,
                 email: candidate.user.email,
                 description: candidate.user.description,
-                countryId: candidate.user.country.id,
-                countryName: candidate.user.country.name,
-                countryCode: candidate.user.country.code,
                 lastName: candidate.lastName,
                 birthDate: candidate.birthDate)
     }

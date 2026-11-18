@@ -2,7 +2,6 @@ package zg.acelera.msnucleo.dto.user
 
 import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotBlank
-import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size
 
 class UserCreateDTO {
@@ -22,6 +21,4 @@ class UserCreateDTO {
     @NotBlank(message = "Description cannot be blank")
     String description
 
-    @NotNull(message = "Country id cannot be null")
-    UUID countryId
 }
