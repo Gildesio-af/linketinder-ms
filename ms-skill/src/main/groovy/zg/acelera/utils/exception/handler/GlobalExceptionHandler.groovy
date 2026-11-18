@@ -20,6 +20,17 @@ class GlobalExceptionHandler {
         return new ResponseEntity<>(error, e.getStatus());
     }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    ResponseEntity<Object> handleIllegalArgumentException(
+            IllegalArgumentException e, WebRequest request) {
+        CustomError<String> error = new CustomError<>(
+                e.getMessage(),
+                request.getDescription(false),
+                HttpStatus.CONFLICT)
+
+        return new ResponseEntity<>(error, HttpStatus.CONFLICT)
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     ResponseEntity<Object> handleMethodArgumentNotValidException(
             MethodArgumentNotValidException e, WebRequest request) {
