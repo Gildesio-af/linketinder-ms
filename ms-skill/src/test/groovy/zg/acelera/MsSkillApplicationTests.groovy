@@ -1,4 +1,4 @@
-package zg.acelera.ms_skill
+package zg.acelera
 
 import org.junit.jupiter.api.Test
 import org.springframework.boot.test.context.SpringBootTest
