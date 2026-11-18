@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 import zg.acelera.msnucleo.dto.country.CountryCreateDTO
@@ -33,13 +34,12 @@ class CountryController {
     }
 
     @GetMapping
-    ResponseEntity<Page<CountryResponseDTO>> findAll(Pageable pageable) {
+    ResponseEntity<Page<CountryResponseDTO>> findAll(
+            Pageable pageable,
+            @RequestParam(value = "name", required = false) String name) {
+        if (name != null)
+            return ResponseEntity.ok(countryService.findByName(name, pageable))
         ResponseEntity.ok(countryService.findAll(pageable))
-    }
-
-    @GetMapping("/name/{name}")
-    ResponseEntity<CountryResponseDTO> findByName(@PathVariable("name") String name) {
-        ResponseEntity.ok(countryService.findByName(name))
     }
 
     @GetMapping("/code/{code}")

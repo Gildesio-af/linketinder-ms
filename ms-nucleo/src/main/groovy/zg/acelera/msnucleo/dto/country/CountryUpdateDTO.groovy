@@ -1,15 +1,15 @@
 package zg.acelera.msnucleo.dto.country
 
-import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.Pattern
 import jakarta.validation.constraints.Size
 
 class CountryUpdateDTO {
-    @NotBlank(message = "Country name cannot be blank")
     @Size(max = 75, message = "Country name must have at most 75 characters")
+    @Pattern(regexp = ".*\\S.*", message = "Country name cannot be blank")
     private String name
 
-    @NotBlank(message = "Country code cannot be blank")
     @Size(min = 2, max = 2, message = "Country code must have exactly 2 characters")
+    @Pattern(regexp = "[A-Za-z]{2}", message = "Country code must contain exactly 2 letters")
     private String code
 
     String getName() { name }

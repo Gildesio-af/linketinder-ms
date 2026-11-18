@@ -31,10 +31,12 @@ class CountryService {
     }
 
     @Transactional(readOnly = true)
-    CountryResponseDTO findByName(String name) {
-        Country country = countryRepository.findByNameIgnoreCase(name.trim())
-                .orElseThrow { new EntityNotFoundException("Country not found with name: $name") }
-        CountryResponseDTO.fromDomain(country)
+    Page<CountryResponseDTO> findByName(String name, Pageable pageable) {
+        String term = name?.trim()
+        if (!term)
+            throw new IllegalArgumentException("Country name cannot be blank")
+        countryRepository.findByNameContainingIgnoreCase(term, pageable)
+                .map { CountryResponseDTO.fromDomain(it) }
     }
 
     @Transactional(readOnly = true)
@@ -54,11 +56,14 @@ class CountryService {
     @Transactional
     CountryResponseDTO update(UUID id, CountryUpdateDTO dto) {
         Country country = findEntity(id)
-        String name = dto.name().trim()
-        String code = dto.code().trim().toUpperCase()
+        String name = dto.name() == null ? null : dto.name().trim()
+        String code = dto.code() == null ? null : dto.code().trim().toUpperCase()
+
         validateUnique(name, code, id)
-        country.name = name
-        country.code = code
+        if (name != null)
+            country.name = name
+        if (code != null)
+            country.code = code
         CountryResponseDTO.fromDomain(countryRepository.save(country))
     }
 
@@ -75,12 +80,12 @@ class CountryService {
     }
 
     private void validateUnique(String name, String code, UUID ignoredId) {
-        if (countryRepository.findByNameIgnoreCase(name).isPresent()) {
+        if (name != null && countryRepository.findByNameIgnoreCase(name).isPresent()) {
             Country existing = countryRepository.findByNameIgnoreCase(name).get()
             if (existing.id != ignoredId)
                 throw new IllegalArgumentException("Country with name '$name' already exists")
         }
-        if (countryRepository.findByCodeIgnoreCase(code).isPresent()) {
+        if (code != null && countryRepository.findByCodeIgnoreCase(code).isPresent()) {
             Country existing = countryRepository.findByCodeIgnoreCase(code).get()
             if (existing.id != ignoredId)
                 throw new IllegalArgumentException("Country with code '$code' already exists")
