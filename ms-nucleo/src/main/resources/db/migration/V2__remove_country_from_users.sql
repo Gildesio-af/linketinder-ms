@@ -1,0 +1,3 @@
+ALTER TABLE users DROP CONSTRAINT IF EXISTS fk_users_country;
+
+ALTER TABLE users DROP COLUMN IF EXISTS country_id;
