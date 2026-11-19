@@ -41,61 +41,29 @@ class CompanyService {
     @Transactional(readOnly = true)
     Page<CompanyResponseDTO> findAll(Pageable pageable) {
         companyRepository.findAll(pageable).map {
-            CompanyResponseDTO.fromDomain(it, findAddresses(it.userId))
+            toResponse(it)
         }
     }
 
     @Transactional
     CompanyResponseDTO save(CompanyCreateDTO dto) {
         User user = userService.create(dto.user)
-        validateCnpj(dto.company.cnpj.trim(), null)
-
-        Company company = new Company(
-                user: user,
-                cnpj: dto.company.cnpj.trim())
-        CompanyResponseDTO.fromDomain(
-                companyRepository.save(company),
-                findAddresses(user.id))
+        Company company = createCompany(user, dto)
+        toResponse(companyRepository.save(company))
     }
 
     @Transactional
     CompanyResponseDTO update(UUID id, CompanyUpdateDTO dto) {
         Company company = findEntity(id)
-
-        if (dto.name != null)
-            company.user.name = dto.name.trim()
-        if (dto.email != null) {
-            String email = dto.email.trim().toLowerCase()
-            if (userRepository.findByEmailIgnoreCase(email).isPresent()) {
-                User existing = userRepository.findByEmailIgnoreCase(email).get()
-                if (existing.id != id)
-                    throw new IllegalArgumentException("User with email '$email' already exists")
-            }
-            company.user.email = email
-        }
-        if (dto.description != null)
-            company.user.description = dto.description.trim()
-        if (dto.name != null || dto.email != null || dto.description != null)
-            userRepository.save(company.user)
-
-        if (dto.cnpj != null) {
-            String cnpj = dto.cnpj.trim()
-            validateCnpj(cnpj, id)
-            company.cnpj = cnpj
-        }
-
-        CompanyResponseDTO.fromDomain(
-                companyRepository.save(company),
-                findAddresses(id))
+        updateUser(company.user, dto, id)
+        updateCompany(company, dto, id)
+        toResponse(companyRepository.save(company))
     }
 
     @Transactional
     void delete(UUID id) {
-        if (!companyRepository.existsById(id))
-            throw new EntityNotFoundException("Company not found with id: $id")
-        if (!userRepository.existsById(id))
-            throw new EntityNotFoundException("User not found with id: $id")
-
+        ensureCompanyExists(id)
+        ensureUserExists(id)
         companyRepository.delete(id)
         userRepository.delete(id)
     }
@@ -109,11 +77,62 @@ class CompanyService {
         addressRepository.findByUserId(userId).collect { AddressResponseDTO.fromDomain(it) }
     }
 
+    private CompanyResponseDTO toResponse(Company company) {
+        CompanyResponseDTO.fromDomain(company, findAddresses(company.userId))
+    }
+
+    private Company createCompany(User user, CompanyCreateDTO dto) {
+        String cnpj = dto.company.cnpj.trim()
+        validateCnpj(cnpj, null)
+        new Company(user: user, cnpj: cnpj)
+    }
+
+    private void updateUser(User user, CompanyUpdateDTO dto, UUID id) {
+        if (dto.name != null)
+            user.name = dto.name.trim()
+        if (dto.email != null)
+            user.email = normalizeAndValidateEmail(dto.email, id)
+        if (dto.description != null)
+            user.description = dto.description.trim()
+        if (hasUserChanges(dto))
+            userRepository.save(user)
+    }
+
+    private String normalizeAndValidateEmail(String rawEmail, UUID id) {
+        String email = rawEmail.trim().toLowerCase()
+        userRepository.findByEmailIgnoreCase(email).ifPresent { existing ->
+            if (existing.id != id)
+                throw new IllegalArgumentException("User with email '$email' already exists")
+        }
+        email
+    }
+
+    private static boolean hasUserChanges(CompanyUpdateDTO dto) {
+        dto.name != null || dto.email != null || dto.description != null
+    }
+
+    private void updateCompany(Company company, CompanyUpdateDTO dto, UUID id) {
+        if (dto.cnpj != null) {
+            String cnpj = dto.cnpj.trim()
+            validateCnpj(cnpj, id)
+            company.cnpj = cnpj
+        }
+    }
+
     private void validateCnpj(String cnpj, UUID ignoredId) {
-        if (companyRepository.findByCnpj(cnpj).isPresent()) {
-            Company existing = companyRepository.findByCnpj(cnpj).get()
+        companyRepository.findByCnpj(cnpj).ifPresent { existing ->
             if (existing.userId != ignoredId)
                 throw new IllegalArgumentException("Company with CNPJ '$cnpj' already exists")
         }
+    }
+
+    private void ensureCompanyExists(UUID id) {
+        if (!companyRepository.existsById(id))
+            throw new EntityNotFoundException("Company not found with id: $id")
+    }
+
+    private void ensureUserExists(UUID id) {
+        if (!userRepository.existsById(id))
+            throw new EntityNotFoundException("User not found with id: $id")
     }
 }
