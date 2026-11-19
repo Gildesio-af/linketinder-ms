@@ -1,13 +1,12 @@
 package zg.acelera.msnucleo
 
-import org.junit.jupiter.api.Test
 import org.springframework.boot.test.context.SpringBootTest
+import spock.lang.Specification
 
 @SpringBootTest
-class MsNucleoApplicationTests {
-
-    @Test
-    void contextLoads() {
+class MsNucleoApplicationTests extends Specification {
+    void "application context loads"() {
+        expect:
+        true
     }
-
 }
