@@ -10,6 +10,8 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://skill-db:5432/ms_skill_db
       SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
       SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+      APP_JWT_SECRET: ${APP_JWT_SECRET}
+      APP_CORS_ALLOWED_ORIGINS: ${APP_CORS_ALLOWED_ORIGINS:-http://localhost:3000}
     depends_on:
       skill-db:
         condition: service_healthy
