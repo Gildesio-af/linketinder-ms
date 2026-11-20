@@ -2,7 +2,7 @@ package zg.acelera.msnucleo.controller
 
 import org.springframework.http.HttpStatus
 import spock.lang.Specification
-import zg.acelera.msnucleo.dto.company.CompanyLikeCreateDTO
+
 import zg.acelera.msnucleo.dto.company.CompanyLikeResponseDTO
 import zg.acelera.msnucleo.domain.User
 import zg.acelera.msnucleo.domain.UserRole
@@ -26,14 +26,13 @@ class CompanyLikeControllerTest extends Specification {
                 id: companyId,
                 email: 'contato@acme.com',
                 role: UserRole.COMPANY))
-        CompanyLikeCreateDTO dto = new CompanyLikeCreateDTO(candidateId: candidateId)
         CompanyLikeResponseDTO response = new CompanyLikeResponseDTO(
                 companyId: companyId,
                 candidateId: candidateId)
-        companyLikeService.save(companyId, dto) >> response
+        companyLikeService.save(companyId, candidateId) >> response
 
         when:
-        def result = controller.save(principal, dto)
+        def result = controller.saveByCandidateId(principal, candidateId)
 
         then:
         result.statusCode == HttpStatus.CREATED
