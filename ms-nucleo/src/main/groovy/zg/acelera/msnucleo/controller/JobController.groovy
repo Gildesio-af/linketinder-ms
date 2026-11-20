@@ -3,7 +3,10 @@ package zg.acelera.msnucleo.controller
 import jakarta.validation.Valid
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -16,6 +19,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 import zg.acelera.msnucleo.dto.job.JobCreateDTO
 import zg.acelera.msnucleo.dto.job.JobResponseDTO
 import zg.acelera.msnucleo.dto.job.JobUpdateDTO
+import zg.acelera.msnucleo.infrastructure.security.CustomUserDetails
 import zg.acelera.msnucleo.service.JobService
 
 @RestController
@@ -45,13 +49,18 @@ class JobController {
     }
 
     @PostMapping
-    ResponseEntity<JobResponseDTO> save(@Valid @RequestBody JobCreateDTO dto) {
+    @PreAuthorize("hasRole('COMPANY')")
+    ResponseEntity<JobResponseDTO> save(
+            @AuthenticationPrincipal CustomUserDetails principal,
+            @Valid @RequestBody JobCreateDTO dto) {
+        dto.publisherId = getCompanyId(principal)
         JobResponseDTO saved = jobService.save(dto)
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
                 .path("/{id}")
                 .buildAndExpand(saved.id)
                 .toUri()
+
         ResponseEntity.created(location).body(saved)
     }
 
@@ -66,5 +75,12 @@ class JobController {
     ResponseEntity<?> delete(@PathVariable("id") UUID id) {
         jobService.delete(id)
         ResponseEntity.noContent().build()
+    }
+
+    private static UUID getCompanyId(CustomUserDetails principal) {
+        UUID companyId = principal?.user?.id
+        if (companyId == null)
+            throw new IllegalArgumentException("Authenticated company id not found")
+        companyId
     }
 }

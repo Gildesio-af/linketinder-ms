@@ -15,6 +15,5 @@ class JobCreateDTO {
     @NotNull(message = "Address id cannot be null")
     UUID addressId
 
-    @NotNull(message = "Publisher id cannot be null")
     UUID publisherId
 }
