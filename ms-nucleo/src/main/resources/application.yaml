@@ -14,3 +14,8 @@ spring:
     show-sql: true
     open-in-view: false
 
+api:
+  security:
+    token:
+      secret: ${APP_JWT_SECRET:default-dev-secret-key-at-least-32-chars}
+      expiration_in_hours: ${APP_JWT_EXPIRATION_TIME_IN_HOURS:24}
