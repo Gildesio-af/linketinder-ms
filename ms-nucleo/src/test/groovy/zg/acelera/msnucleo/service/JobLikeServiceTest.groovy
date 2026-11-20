@@ -39,7 +39,7 @@ class JobLikeServiceTest extends Specification {
         jobRepository.findById(jobId) >> Optional.of(job)
         jobLikeRepository.existsById({ JobLikeId id ->
             id.candidateId == candidateId && id.jobId == jobId
-        }) >> false
+        } as JobLikeId) >> false
 
         when:
         JobLikeResponseDTO result = service.save(candidateId, jobId)
@@ -65,7 +65,7 @@ class JobLikeServiceTest extends Specification {
         jobRepository.findById(jobId) >> Optional.of(new Job(id: jobId))
         jobLikeRepository.existsById({ JobLikeId id ->
             id.candidateId == candidateId && id.jobId == jobId
-        }) >> true
+        } as JobLikeId) >> true
 
         when:
         service.save(candidateId, jobId)
@@ -81,7 +81,7 @@ class JobLikeServiceTest extends Specification {
         UUID jobId = UUID.randomUUID()
         jobLikeRepository.existsById({ JobLikeId id ->
             id.candidateId == candidateId && id.jobId == jobId
-        }) >> true
+        } as JobLikeId) >> true
 
         when:
         service.delete(candidateId, jobId)

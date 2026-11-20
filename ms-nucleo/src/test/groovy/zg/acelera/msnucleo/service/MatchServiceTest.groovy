@@ -5,6 +5,7 @@ import zg.acelera.msnucleo.domain.Candidate
 import zg.acelera.msnucleo.domain.Company
 import zg.acelera.msnucleo.domain.Job
 import zg.acelera.msnucleo.domain.JobLike
+import zg.acelera.msnucleo.domain.Match
 import zg.acelera.msnucleo.repositories.company.CompanyLikeRepository
 import zg.acelera.msnucleo.repositories.job.JobLikeRepository
 import zg.acelera.msnucleo.repositories.match.MatchRepository
@@ -43,12 +44,12 @@ class MatchServiceTest extends Specification {
 
         then:
         1 * matchRepository.save({
-            zg.acelera.msnucleo.domain.Match match ->
+            Match match ->
                     match.candidate == candidate &&
                     match.company == company &&
                     match.job == job &&
                     match.createdAt != null
-        }) >> { zg.acelera.msnucleo.domain.Match match -> match }
+        }) >> { Match match -> match }
     }
 
     void "job like creates match when company already likes candidate"() {
@@ -68,10 +69,10 @@ class MatchServiceTest extends Specification {
 
         then:
         1 * matchRepository.save({
-            zg.acelera.msnucleo.domain.Match match ->
+                Match match ->
                     match.candidate == candidate &&
                     match.company == company &&
                     match.job == job
-        }) >> { zg.acelera.msnucleo.domain.Match match -> match }
+        }) >> { Match match -> match }
     }
 }

@@ -37,7 +37,7 @@ class CompanyLikeServiceTest extends Specification {
         candidateRepository.findById(candidateId) >> Optional.of(candidate)
         companyLikeRepository.existsById({ CompanyLikeId id ->
             id.companyId == companyId && id.likedCandidateId == candidateId
-        }) >> false
+        } as CompanyLikeId) >> false
 
         when:
         CompanyLikeResponseDTO result = service.save(
@@ -62,7 +62,7 @@ class CompanyLikeServiceTest extends Specification {
         UUID candidateId = UUID.randomUUID()
         companyLikeRepository.existsById({ CompanyLikeId id ->
             id.companyId == companyId && id.likedCandidateId == candidateId
-        }) >> true
+        } as CompanyLikeId) >> true
 
         when:
         service.delete(companyId, candidateId)
