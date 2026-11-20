@@ -8,6 +8,7 @@ import zg.acelera.msnucleo.domain.Address
 import zg.acelera.msnucleo.domain.Company
 import zg.acelera.msnucleo.domain.Country
 import zg.acelera.msnucleo.domain.User
+import zg.acelera.msnucleo.domain.UserRole
 import zg.acelera.msnucleo.dto.company.CompanyCreateDTO
 import zg.acelera.msnucleo.dto.company.CompanyDataCreateDTO
 import zg.acelera.msnucleo.dto.company.CompanyResponseDTO
@@ -81,9 +82,10 @@ class CompanyServiceTest extends Specification {
         given:
         UUID id = UUID.randomUUID()
         User user = new User(id: id, name: 'Acme', email: 'contato@acme.com',
-                password: 'secret1', description: 'Technology company')
+                password: '$2a$10$hashed-password', role: UserRole.COMPANY,
+                description: 'Technology company')
         CompanyCreateDTO dto = createDto()
-        userService.create(dto.user) >> user
+        1 * userService.create(dto.user, UserRole.COMPANY) >> user
         companyRepository.findByCnpj('12.345.678/0001-90') >> Optional.empty()
         addressRepository.findByUserId(id) >> []
 
@@ -106,7 +108,7 @@ class CompanyServiceTest extends Specification {
         given:
         User user = new User(id: UUID.randomUUID(), name: 'Acme')
         CompanyCreateDTO dto = createDto()
-        userService.create(dto.user) >> user
+        1 * userService.create(dto.user, UserRole.COMPANY) >> user
         companyRepository.findByCnpj('12.345.678/0001-90') >>
                 Optional.of(buildCompany(UUID.randomUUID()))
 
@@ -274,6 +276,8 @@ class CompanyServiceTest extends Specification {
                 id: id,
                 name: 'Acme',
                 email: 'contato@acme.com',
+                password: '$2a$10$hashed-password',
+                role: UserRole.COMPANY,
                 description: 'Technology company')
         new Company(
                 userId: id,

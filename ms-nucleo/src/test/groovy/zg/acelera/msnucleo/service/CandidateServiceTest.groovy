@@ -8,6 +8,7 @@ import zg.acelera.msnucleo.domain.Address
 import zg.acelera.msnucleo.domain.Candidate
 import zg.acelera.msnucleo.domain.Country
 import zg.acelera.msnucleo.domain.User
+import zg.acelera.msnucleo.domain.UserRole
 import zg.acelera.msnucleo.dto.address.AddressResponseDTO
 import zg.acelera.msnucleo.dto.candidate.CandidateCreateDTO
 import zg.acelera.msnucleo.dto.candidate.CandidateDataCreateDTO
@@ -99,9 +100,10 @@ class CandidateServiceTest extends Specification {
         given:
         UUID id = UUID.randomUUID()
         User user = new User(id: id, name: 'Ana', email: 'ana@example.com',
-                password: 'secret1', description: 'Developer')
+                password: '$2a$10$hashed-password', role: UserRole.CANDIDATE,
+                description: 'Developer')
         CandidateCreateDTO dto = createDto()
-        userService.create(dto.user) >> user
+        1 * userService.create(dto.user, UserRole.CANDIDATE) >> user
         candidateRepository.findByCpf('12345678900') >> Optional.empty()
         addressRepository.findByUserId(id) >> []
 
@@ -125,7 +127,7 @@ class CandidateServiceTest extends Specification {
         given:
         User user = new User(id: UUID.randomUUID(), name: 'Ana')
         CandidateCreateDTO dto = createDto()
-        userService.create(dto.user) >> user
+        1 * userService.create(dto.user, UserRole.CANDIDATE) >> user
         candidateRepository.findByCpf('12345678900') >>
                 Optional.of(buildCandidate(UUID.randomUUID()))
 
@@ -280,6 +282,8 @@ class CandidateServiceTest extends Specification {
                 id: id,
                 name: 'Ana',
                 email: 'ana@example.com',
+                password: '$2a$10$hashed-password',
+                role: UserRole.CANDIDATE,
                 description: 'Developer')
         new Candidate(
                 userId: id,
