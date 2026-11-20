@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import zg.acelera.msnucleo.domain.Candidate
 import zg.acelera.msnucleo.domain.User
+import zg.acelera.msnucleo.domain.UserRole
 import zg.acelera.msnucleo.dto.address.AddressResponseDTO
 import zg.acelera.msnucleo.dto.candidate.CandidateCreateDTO
 import zg.acelera.msnucleo.dto.candidate.CandidateMatchResponseDTO
@@ -53,7 +54,7 @@ class CandidateService {
 
     @Transactional
     CandidateResponseDTO save(CandidateCreateDTO dto) {
-        User user = userService.create(dto.user)
+        User user = userService.create(dto.user, UserRole.CANDIDATE)
         Candidate candidate = createCandidate(user, dto)
         toResponse(candidateRepository.save(candidate))
     }

@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import zg.acelera.msnucleo.domain.Company
 import zg.acelera.msnucleo.domain.User
+import zg.acelera.msnucleo.domain.UserRole
 import zg.acelera.msnucleo.dto.address.AddressResponseDTO
 import zg.acelera.msnucleo.dto.company.CompanyCreateDTO
 import zg.acelera.msnucleo.dto.company.CompanyResponseDTO
@@ -47,7 +48,7 @@ class CompanyService {
 
     @Transactional
     CompanyResponseDTO save(CompanyCreateDTO dto) {
-        User user = userService.create(dto.user)
+        User user = userService.create(dto.user, UserRole.COMPANY)
         Company company = createCompany(user, dto)
         toResponse(companyRepository.save(company))
     }
