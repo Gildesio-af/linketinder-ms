@@ -41,7 +41,8 @@ class JwtAuthenticationFilterTest extends Specification {
 
         then:
         1 * chain.doFilter(request, response)
-        SecurityContextHolder.context.authentication.principal == id
+        SecurityContextHolder.context.authentication.principal instanceof CustomUserDetails
+        SecurityContextHolder.context.authentication.principal.user.id == id
         SecurityContextHolder.context.authentication.authorities*.authority == ['ROLE_CANDIDATE']
     }
 

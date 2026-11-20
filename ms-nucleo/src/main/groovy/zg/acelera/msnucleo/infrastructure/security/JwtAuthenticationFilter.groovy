@@ -9,6 +9,8 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Component
 import org.springframework.web.filter.OncePerRequestFilter
+import zg.acelera.msnucleo.domain.User
+import zg.acelera.msnucleo.domain.UserRole
 
 @Component
 class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -29,9 +31,15 @@ class JwtAuthenticationFilter extends OncePerRequestFilter {
                 DecodedJWT decoded = tokenService.validateToken(token)
                 UUID userId = UUID.fromString(decoded.subject)
                 String role = decoded.getClaim("role").asString()
+                User user = new User(
+                        id: userId,
+                        email: decoded.getClaim("email").asString(),
+                        role: UserRole.valueOf(role.replace("ROLE_", "")))
+                CustomUserDetails principal = new CustomUserDetails(user)
 
                 List<SimpleGrantedAuthority> authorities = [new SimpleGrantedAuthority(role)]
-                UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(userId, null, authorities)
+                UsernamePasswordAuthenticationToken auth =
+                        new UsernamePasswordAuthenticationToken(principal, null, authorities)
 
                 SecurityContextHolder.context.authentication = auth
             } catch (Exception ignored) {
