@@ -4,6 +4,8 @@ import jakarta.validation.Valid
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.http.ResponseEntity
+import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -16,6 +18,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 import zg.acelera.msnucleo.dto.company.CompanyCreateDTO
 import zg.acelera.msnucleo.dto.company.CompanyResponseDTO
 import zg.acelera.msnucleo.dto.company.CompanyUpdateDTO
+import zg.acelera.msnucleo.infrastructure.security.CustomUserDetails
 import zg.acelera.msnucleo.service.CompanyService
 
 @RestController
@@ -55,9 +58,18 @@ class CompanyController {
         ResponseEntity.ok(companyService.update(id, dto))
     }
 
-    @DeleteMapping("/{id}")
-    ResponseEntity<?> delete(@PathVariable("id") UUID id) {
-        companyService.delete(id)
+    @DeleteMapping
+    @PreAuthorize("hasRole('COMPANY')")
+    ResponseEntity<?> delete(
+            @AuthenticationPrincipal CustomUserDetails principal) {
+        companyService.delete(getCompanyId(principal))
         ResponseEntity.noContent().build()
+    }
+
+    private static UUID getCompanyId(CustomUserDetails principal) {
+        UUID companyId = principal?.user?.id
+        if (companyId == null)
+            throw new IllegalArgumentException("Authenticated company id not found")
+        companyId
     }
 }
