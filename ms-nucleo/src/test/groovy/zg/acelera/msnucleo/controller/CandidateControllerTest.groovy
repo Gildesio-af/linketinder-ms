@@ -8,12 +8,15 @@ import org.springframework.mock.web.MockHttpServletRequest
 import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.context.request.ServletRequestAttributes
 import spock.lang.Specification
+import zg.acelera.msnucleo.domain.User
+import zg.acelera.msnucleo.domain.UserRole
 import zg.acelera.msnucleo.dto.candidate.CandidateCreateDTO
 import zg.acelera.msnucleo.dto.candidate.CandidateMatchResponseDTO
 import zg.acelera.msnucleo.dto.candidate.CandidateResponseDTO
 import zg.acelera.msnucleo.dto.candidate.CandidateUpdateDTO
 import zg.acelera.msnucleo.dto.candidate.CandidateDataCreateDTO
 import zg.acelera.msnucleo.dto.user.UserCreateDTO
+import zg.acelera.msnucleo.infrastructure.security.CustomUserDetails
 import zg.acelera.msnucleo.service.CandidateService
 
 import java.time.LocalDate
@@ -106,9 +109,13 @@ class CandidateControllerTest extends Specification {
     void "delete returns no content"() {
         given:
         UUID id = UUID.randomUUID()
+        CustomUserDetails principal = new CustomUserDetails(new User(
+                id: id,
+                email: 'ana@example.com',
+                role: UserRole.CANDIDATE))
 
         when:
-        def result = controller.delete(id)
+        def result = controller.delete(principal)
 
         then:
         result.statusCode == HttpStatus.NO_CONTENT
