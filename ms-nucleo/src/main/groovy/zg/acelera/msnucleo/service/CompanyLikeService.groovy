@@ -20,27 +20,26 @@ class CompanyLikeService {
     private final CompanyLikeRepository companyLikeRepository
     private final CompanyRepository companyRepository
     private final CandidateRepository candidateRepository
+    private final MatchService matchService
 
     CompanyLikeService(CompanyLikeRepository companyLikeRepository,
                        CompanyRepository companyRepository,
-                       CandidateRepository candidateRepository) {
+                       CandidateRepository candidateRepository,
+                       MatchService matchService) {
         this.companyLikeRepository = companyLikeRepository
         this.companyRepository = companyRepository
         this.candidateRepository = candidateRepository
+        this.matchService = matchService
     }
 
     @Transactional(readOnly = true)
-    Page<CompanyLikeResponseDTO> findAll(
-            UUID companyId,
-            Pageable pageable) {
+    Page<CompanyLikeResponseDTO> findAll(UUID companyId, Pageable pageable) {
         companyLikeRepository.findByCompanyId(companyId, pageable)
                 .map { CompanyLikeResponseDTO.fromDomain(it) }
     }
 
     @Transactional
-    CompanyLikeResponseDTO save(
-            UUID companyId,
-            UUID candidateId) {
+    CompanyLikeResponseDTO save(UUID companyId, UUID candidateId) {
         Company company = companyRepository.findById(companyId)
                 .orElseThrow { new EntityNotFoundException("Company not found with id: $companyId") }
         Candidate candidate = candidateRepository.findById(candidateId)
@@ -56,18 +55,20 @@ class CompanyLikeService {
                 id: likeId,
                 company: company,
                 candidate: candidate)
-        CompanyLikeResponseDTO.fromDomain(companyLikeRepository.save(companyLike))
+        CompanyLikeResponseDTO response =
+                CompanyLikeResponseDTO.fromDomain(companyLikeRepository.save(companyLike))
+        matchService.createMatchesForCompanyLike(company, candidate)
+        response
     }
 
     @Transactional
-    void delete(
-            UUID companyId,
-            UUID candidateId) {
+    void delete(UUID companyId, UUID candidateId) {
         CompanyLikeId likeId = new CompanyLikeId(
                 companyId: companyId,
                 likedCandidateId: candidateId)
         if (!companyLikeRepository.existsById(likeId))
             throw new EntityNotFoundException("Company like not found")
         companyLikeRepository.deleteById(likeId)
+        matchService.deleteMatchesByCandidateAndCompany(candidateId, companyId)
     }
 }

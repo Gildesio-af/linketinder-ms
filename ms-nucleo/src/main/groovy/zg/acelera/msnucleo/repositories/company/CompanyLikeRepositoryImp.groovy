@@ -20,5 +20,10 @@ class CompanyLikeRepositoryImp implements CompanyLikeRepository {
     }
     @Override CompanyLike save(CompanyLike companyLike) { companyLikeRepositoryJpa.save(companyLike) }
     @Override boolean existsById(CompanyLikeId id) { companyLikeRepositoryJpa.existsById(id) }
+    @Override boolean existsByCompanyIdAndCandidateId(UUID companyId, UUID candidateId) {
+        companyLikeRepositoryJpa.existsById(new CompanyLikeId(
+                companyId: companyId,
+                likedCandidateId: candidateId))
+    }
     @Override void deleteById(CompanyLikeId id) { companyLikeRepositoryJpa.deleteById(id) }
 }

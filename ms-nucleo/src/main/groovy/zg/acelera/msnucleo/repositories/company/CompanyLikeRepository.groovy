@@ -10,5 +10,6 @@ interface CompanyLikeRepository {
     Page<CompanyLike> findByCompanyId(UUID companyId, Pageable pageable)
     CompanyLike save(CompanyLike companyLike)
     boolean existsById(CompanyLikeId id)
+    boolean existsByCompanyIdAndCandidateId(UUID companyId, UUID candidateId)
     void deleteById(CompanyLikeId id)
 }
