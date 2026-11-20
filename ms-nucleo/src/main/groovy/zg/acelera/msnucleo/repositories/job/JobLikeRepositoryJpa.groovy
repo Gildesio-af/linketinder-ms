@@ -8,4 +8,5 @@ import zg.acelera.msnucleo.domain.JobLikeId
 
 interface JobLikeRepositoryJpa extends JpaRepository<JobLike, JobLikeId> {
     Page<JobLike> findByIdCandidateId(UUID candidateId, Pageable pageable)
+    List<JobLike> findAllByIdCandidateId(UUID candidateId)
 }

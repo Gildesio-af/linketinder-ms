@@ -18,6 +18,9 @@ class JobLikeRepositoryImp implements JobLikeRepository {
     @Override Page<JobLike> findByCandidateId(UUID candidateId, Pageable pageable) {
         jobLikeRepositoryJpa.findByIdCandidateId(candidateId, pageable)
     }
+    @Override List<JobLike> findAllByCandidateId(UUID candidateId) {
+        jobLikeRepositoryJpa.findAllByIdCandidateId(candidateId)
+    }
     @Override JobLike save(JobLike jobLike) { jobLikeRepositoryJpa.save(jobLike) }
     @Override boolean existsById(JobLikeId id) { jobLikeRepositoryJpa.existsById(id) }
     @Override void deleteById(JobLikeId id) { jobLikeRepositoryJpa.deleteById(id) }
