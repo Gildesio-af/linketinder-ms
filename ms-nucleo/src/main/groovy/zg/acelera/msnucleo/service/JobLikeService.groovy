@@ -20,13 +20,16 @@ class JobLikeService {
     private final JobLikeRepository jobLikeRepository
     private final CandidateRepository candidateRepository
     private final JobRepository jobRepository
+    private final MatchService matchService
 
     JobLikeService(JobLikeRepository jobLikeRepository,
                    CandidateRepository candidateRepository,
-                   JobRepository jobRepository) {
+                   JobRepository jobRepository,
+                   MatchService matchService) {
         this.jobLikeRepository = jobLikeRepository
         this.candidateRepository = candidateRepository
         this.jobRepository = jobRepository
+        this.matchService = matchService
     }
 
     @Transactional(readOnly = true)
@@ -52,7 +55,10 @@ class JobLikeService {
                 id: likeId,
                 candidate: candidate,
                 job: job)
-        JobLikeResponseDTO.fromDomain(jobLikeRepository.save(jobLike))
+        JobLikeResponseDTO response =
+                JobLikeResponseDTO.fromDomain(jobLikeRepository.save(jobLike))
+        matchService.createMatchForJobLike(candidate, job)
+        response
     }
 
     @Transactional
@@ -63,5 +69,6 @@ class JobLikeService {
         if (!jobLikeRepository.existsById(likeId))
             throw new EntityNotFoundException("Job like not found")
         jobLikeRepository.deleteById(likeId)
+        matchService.deleteMatchByCandidateAndJob(candidateId, jobId)
     }
 }
