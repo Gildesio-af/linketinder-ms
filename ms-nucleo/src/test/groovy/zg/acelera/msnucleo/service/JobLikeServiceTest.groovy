@@ -14,16 +14,19 @@ class JobLikeServiceTest extends Specification {
     JobLikeRepository jobLikeRepository
     CandidateRepository candidateRepository
     JobRepository jobRepository
+    MatchService matchService
     JobLikeService service
 
     def setup() {
         jobLikeRepository = Mock()
         candidateRepository = Mock()
         jobRepository = Mock()
+        matchService = Mock()
         service = new JobLikeService(
                 jobLikeRepository,
                 candidateRepository,
-                jobRepository)
+                jobRepository,
+                matchService)
     }
 
     void "candidate likes job using candidate id"() {
@@ -50,6 +53,7 @@ class JobLikeServiceTest extends Specification {
         }) >> { JobLike like -> like }
         result.candidateId == candidateId
         result.jobId == jobId
+        1 * matchService.createMatchForJobLike(candidate, job)
     }
 
     void "rejects duplicate job like"() {
@@ -87,5 +91,6 @@ class JobLikeServiceTest extends Specification {
             JobLikeId id -> id.candidateId == candidateId &&
                     id.jobId == jobId
         })
+        1 * matchService.deleteMatchByCandidateAndJob(candidateId, jobId)
     }
 }
