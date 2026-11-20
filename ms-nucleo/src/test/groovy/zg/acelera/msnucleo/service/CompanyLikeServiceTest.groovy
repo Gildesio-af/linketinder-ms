@@ -15,14 +15,16 @@ class CompanyLikeServiceTest extends Specification {
     CompanyLikeRepository companyLikeRepository
     CompanyRepository companyRepository
     CandidateRepository candidateRepository
+    MatchService matchService
     CompanyLikeService service
 
     def setup() {
         companyLikeRepository = Mock()
         companyRepository = Mock()
         candidateRepository = Mock()
+        matchService = Mock()
         service = new CompanyLikeService(
-                companyLikeRepository, companyRepository, candidateRepository)
+                companyLikeRepository, companyRepository, candidateRepository, matchService)
     }
 
     void "company likes candidate using authenticated company id"() {
@@ -51,6 +53,7 @@ class CompanyLikeServiceTest extends Specification {
         }) >> { CompanyLike like -> like }
         result.companyId == companyId
         result.candidateId == candidateId
+        1 * matchService.createMatchesForCompanyLike(company, candidate)
     }
 
     void "delete removes only authenticated company like"() {
@@ -69,6 +72,7 @@ class CompanyLikeServiceTest extends Specification {
             CompanyLikeId id -> id.companyId == companyId &&
                     id.likedCandidateId == candidateId
         })
+        1 * matchService.deleteMatchesByCandidateAndCompany(candidateId, companyId)
     }
 
 }
