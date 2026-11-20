@@ -1,5 +1,6 @@
 package zg.acelera.infrastructure.security.config
 
+import jakarta.servlet.http.HttpServletResponse
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.HttpMethod
@@ -9,9 +10,6 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
-import org.springframework.web.cors.CorsConfiguration
-import org.springframework.web.cors.CorsConfigurationSource
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 import zg.acelera.infrastructure.security.JwtAuthenticationFilter
 
 @Configuration
@@ -33,10 +31,10 @@ class SecurityConfig {
                 .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
                 .exceptionHandling { exceptions ->
                     exceptions.authenticationEntryPoint { _, response, _ ->
-                        response.sendError(jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED)
+                        response.sendError(HttpServletResponse.SC_UNAUTHORIZED)
                     }
                     exceptions.accessDeniedHandler { _, response, _ ->
-                        response.sendError(jakarta.servlet.http.HttpServletResponse.SC_FORBIDDEN)
+                        response.sendError(HttpServletResponse.SC_FORBIDDEN)
                     }
                 }
                 .authorizeHttpRequests { auth ->
@@ -46,19 +44,5 @@ class SecurityConfig {
                 }
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter)
                 .build()
-    }
-
-    @Bean
-    CorsConfigurationSource corsConfigurationSource(
-            @org.springframework.beans.factory.annotation.Value('${app.cors.allowed-origins:http://localhost:3000}') String allowedOrigins) {
-        CorsConfiguration configuration = new CorsConfiguration()
-        configuration.allowedOrigins = allowedOrigins.split(',').collect { it.trim() }.findAll { it }
-        configuration.allowedMethods = ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
-        configuration.allowedHeaders = ['Authorization', 'Content-Type']
-        configuration.allowCredentials = true
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource()
-        source.registerCorsConfiguration('/**', configuration)
-        return source
     }
 }
