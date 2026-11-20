@@ -8,7 +8,7 @@ import zg.acelera.msnucleo.domain.Candidate
 import zg.acelera.msnucleo.domain.Company
 import zg.acelera.msnucleo.domain.CompanyLike
 import zg.acelera.msnucleo.domain.CompanyLikeId
-import zg.acelera.msnucleo.dto.company.CompanyLikeCreateDTO
+
 import zg.acelera.msnucleo.dto.company.CompanyLikeResponseDTO
 import zg.acelera.msnucleo.repositories.candidate.CandidateRepository
 import zg.acelera.msnucleo.repositories.company.CompanyLikeRepository
@@ -35,13 +35,6 @@ class CompanyLikeService {
             Pageable pageable) {
         companyLikeRepository.findByCompanyId(companyId, pageable)
                 .map { CompanyLikeResponseDTO.fromDomain(it) }
-    }
-
-    @Transactional
-    CompanyLikeResponseDTO save(
-            UUID companyId,
-            CompanyLikeCreateDTO dto) {
-        save(companyId, dto.candidateId)
     }
 
     @Transactional
