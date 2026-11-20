@@ -8,9 +8,12 @@ import org.springframework.mock.web.MockHttpServletRequest
 import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.context.request.ServletRequestAttributes
 import spock.lang.Specification
+import zg.acelera.msnucleo.domain.User
+import zg.acelera.msnucleo.domain.UserRole
 import zg.acelera.msnucleo.dto.job.JobCreateDTO
 import zg.acelera.msnucleo.dto.job.JobResponseDTO
 import zg.acelera.msnucleo.dto.job.JobUpdateDTO
+import zg.acelera.msnucleo.infrastructure.security.CustomUserDetails
 import zg.acelera.msnucleo.service.JobService
 
 class JobControllerTest extends Specification {
@@ -74,20 +77,25 @@ class JobControllerTest extends Specification {
         given:
         UUID id = UUID.randomUUID()
         UUID addressId = UUID.randomUUID()
-        UUID publisherId = UUID.randomUUID()
+        UUID companyId = UUID.randomUUID()
+        CustomUserDetails principal = new CustomUserDetails(new User(
+                id: companyId,
+                email: 'contato@acme.com',
+                role: UserRole.COMPANY))
         JobCreateDTO dto = new JobCreateDTO(
                 name: 'Java Developer',
                 description: 'Backend development',
-                addressId: addressId,
-                publisherId: publisherId)
+                addressId: addressId)
         JobResponseDTO saved = new JobResponseDTO(id: id)
-        jobService.save(dto) >> saved
+        jobService.save({
+            JobCreateDTO value -> value.publisherId == companyId
+        }) >> saved
         MockHttpServletRequest request = new MockHttpServletRequest(
                 'POST', '/jobs')
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request))
 
         when:
-        def result = controller.save(dto)
+        def result = controller.save(principal, dto)
 
         then:
         result.statusCode == HttpStatus.CREATED
