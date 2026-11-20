@@ -17,6 +17,9 @@ class JobSkill {
     @EmbeddedId
     JobSkillId id = new JobSkillId()
 
+    @Column(name = "company_id")
+    UUID companyId
+
     @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("skillId")
     @JoinColumn(name = "skill_id")

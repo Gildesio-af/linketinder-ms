@@ -35,12 +35,18 @@ class JobSkillService {
 
     @Transactional
     JobSkillResponseDTO save(UUID jobId, JobSkillCreateDTO jobSkillCreateDTO) {
+        return save(jobId, null, jobSkillCreateDTO)
+    }
+
+    @Transactional
+    JobSkillResponseDTO save(UUID jobId, UUID companyId, JobSkillCreateDTO jobSkillCreateDTO) {
         JobSkillId id = new JobSkillId(jobId: jobId, skillId: jobSkillCreateDTO.skillId())
         if (jobSkillRepository.findByJobIdAndSkillId(id).isPresent())
             throw new IllegalArgumentException("Skill is already associated with job")
 
         JobSkill jobSkill = new JobSkill(
                 id: id,
+                companyId: companyId,
                 skill: skillRepository.findById(jobSkillCreateDTO.skillId())
                         .orElseThrow { new EntityNotFoundException(
                                 "Skill not found with id: ${jobSkillCreateDTO.skillId()}") },
@@ -51,15 +57,30 @@ class JobSkillService {
 
     @Transactional
     JobSkillResponseDTO update(UUID jobId, UUID skillId, JobSkillUpdateDTO jobSkillUpdateDTO) {
+        return update(jobId, skillId, null, jobSkillUpdateDTO)
+    }
+
+    @Transactional
+    JobSkillResponseDTO update(UUID jobId, UUID skillId, UUID companyId, JobSkillUpdateDTO jobSkillUpdateDTO) {
         JobSkill jobSkill = findEntity(jobId, skillId)
+        if (companyId != null && jobSkill.companyId != companyId)
+            throw new EntityNotFoundException("Job skill not found")
         jobSkill.level = jobSkillUpdateDTO.level()
         return JobSkillResponseDTO.fromDomain(jobSkillRepository.save(jobSkill))
     }
 
     @Transactional
     void delete(UUID jobId, UUID skillId) {
+        delete(jobId, skillId, null)
+    }
+
+    @Transactional
+    void delete(UUID jobId, UUID skillId, UUID companyId) {
         JobSkillId id = new JobSkillId(jobId: jobId, skillId: skillId)
-        if (!jobSkillRepository.findByJobIdAndSkillId(id).isPresent())
+        Optional<JobSkill> existing = jobSkillRepository.findByJobIdAndSkillId(id)
+        if (!existing.isPresent())
+            throw new EntityNotFoundException("Job skill not found")
+        if (companyId != null && existing.get().companyId != companyId)
             throw new EntityNotFoundException("Job skill not found")
 
         jobSkillRepository.delete(id)
