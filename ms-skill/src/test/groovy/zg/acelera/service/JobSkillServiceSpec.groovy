@@ -100,7 +100,7 @@ class JobSkillServiceSpec extends Specification {
         service.save(jobId, companyId, dto)
 
         then:
-        def exception = thrown(IllegalArgumentException)
+        def exception = thrown(zg.acelera.utils.exception.DuplicateResourceException)
         exception.message == "Skill is already associated with job"
         0 * skillRepository.findById(_)
         0 * jobSkillRepository.save(_)
@@ -172,7 +172,7 @@ class JobSkillServiceSpec extends Specification {
         service.saveAll(jobId, UUID.randomUUID(), [dto, dto])
 
         then:
-        IllegalArgumentException exception = thrown()
+        zg.acelera.utils.exception.DuplicateResourceException exception = thrown()
         exception.message == "Duplicate skill id in batch: $skillId"
         0 * jobSkillRepository._
         0 * skillRepository._

@@ -112,7 +112,7 @@ class SkillServiceSpec extends Specification {
         skillService.save(dto)
 
         then:
-        def exception = thrown(IllegalArgumentException)
+        def exception = thrown(zg.acelera.utils.exception.DuplicateResourceException)
         exception.message == "Skill with name 'Java' already exists"
         0 * skillRepository.save(_)
     }
@@ -155,7 +155,7 @@ class SkillServiceSpec extends Specification {
         skillService.saveAll([java, javaAgain])
 
         then:
-        IllegalArgumentException exception = thrown()
+        zg.acelera.utils.exception.DuplicateResourceException exception = thrown()
         exception.message == "Duplicate skill name in batch: Java"
         0 * skillRepository._
     }
@@ -170,7 +170,7 @@ class SkillServiceSpec extends Specification {
         skillService.saveAll([java])
 
         then:
-        IllegalArgumentException exception = thrown()
+        zg.acelera.utils.exception.DuplicateResourceException exception = thrown()
         exception.message == "Skill with name 'Java' already exists"
         0 * skillRepository.saveAll(_)
     }

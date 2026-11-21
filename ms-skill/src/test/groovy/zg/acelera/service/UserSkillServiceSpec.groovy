@@ -104,7 +104,7 @@ class UserSkillServiceSpec extends Specification {
         service.save(userId, dto)
 
         then:
-        IllegalArgumentException exception = thrown(IllegalArgumentException)
+        zg.acelera.utils.exception.DuplicateResourceException exception = thrown()
         exception.message == "Skill is already associated with user"
         0 * skillRepository.findById(_)
         0 * userSkillRepository.save(_)
@@ -174,7 +174,7 @@ class UserSkillServiceSpec extends Specification {
         service.saveAll(userId, [dto, dto])
 
         then:
-        IllegalArgumentException exception = thrown()
+        zg.acelera.utils.exception.DuplicateResourceException exception = thrown()
         exception.message == "Duplicate skill id in batch: $skillId"
         0 * userSkillRepository._
         0 * skillRepository._
@@ -205,7 +205,7 @@ class UserSkillServiceSpec extends Specification {
         service.saveAll(userId, [dto])
 
         then:
-        IllegalArgumentException exception = thrown()
+        zg.acelera.utils.exception.DuplicateResourceException exception = thrown()
         exception.message == "Skill is already associated with user"
         0 * userSkillRepository.saveAll(_)
     }
