@@ -19,6 +19,11 @@ class SkillRepositoryImp implements SkillRepository {
     }
 
     @Override
+    List<Skill> findAllById(List<UUID> ids) {
+        return skillRepositoryJpa.findAllById(ids).toList()
+    }
+
+    @Override
     Page<Skill> findAll(Pageable pageable) {
         return skillRepositoryJpa.findAll(pageable)
     }

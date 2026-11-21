@@ -6,6 +6,7 @@ import zg.acelera.domain.Skill
 
 interface SkillRepository {
     Optional<Skill> findById(UUID id)
+    List<Skill> findAllById(List<UUID> ids)
     Page<Skill> findAll(Pageable pageable)
     Optional<Skill> findByNameIgnoreCase(String name)
     Skill save(Skill skill)
