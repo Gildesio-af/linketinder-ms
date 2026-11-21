@@ -21,6 +21,12 @@ class UserSkillController {
         this.userSkillService = userSkillService
     }
 
+    @GetMapping("/batch")
+    ResponseEntity<Map<UUID, List<UserSkillResponseDTO>>> findByUserIds(
+            @RequestParam(name = "userIds", defaultValue = "") List<UUID> userIds) {
+        return ResponseEntity.ok(userSkillService.findByUserIds(userIds))
+    }
+
     @GetMapping("/{userId}")
     ResponseEntity<List<UserSkillResponseDTO>> findByUserId(@PathVariable("userId") UUID userId) {
         return ResponseEntity.ok(userSkillService.findByUserId(userId))

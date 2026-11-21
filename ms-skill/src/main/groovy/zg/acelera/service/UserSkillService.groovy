@@ -15,6 +15,8 @@ import zg.acelera.utils.exception.DuplicateResourceException
 
 @Service
 class UserSkillService {
+    private static final int MAX_BATCH_USER_IDS = 100
+
     private final UserSkillRepository userSkillRepository
     private final SkillRepository skillRepository
 
@@ -27,6 +29,24 @@ class UserSkillService {
     List<UserSkillResponseDTO> findByUserId(UUID userId) {
         return userSkillRepository.findByUserId(userId)
                 .collect { UserSkillResponseDTO.fromDomain(it) }
+    }
+
+    @Transactional(readOnly = true)
+    Map<UUID, List<UserSkillResponseDTO>> findByUserIds(List<UUID> userIds) {
+        if (userIds.size() > MAX_BATCH_USER_IDS)
+            throw new IllegalArgumentException("At most ${MAX_BATCH_USER_IDS} userIds are allowed per request")
+        if (userIds.contains(null))
+            throw new IllegalArgumentException("Each userIds entry must be a UUID")
+        if (userIds.isEmpty())
+            return [:]
+
+        Map<UUID, List<UserSkillResponseDTO>> skillsByUserId = [:]
+        Set<UUID> uniqueUserIds = new LinkedHashSet<>(userIds)
+        uniqueUserIds.each { skillsByUserId[it] = [] }
+        userSkillRepository.findByUserIds(uniqueUserIds).each { UserSkill userSkill ->
+            skillsByUserId[userSkill.id.userId].add(UserSkillResponseDTO.fromDomain(userSkill))
+        }
+        return skillsByUserId
     }
 
     @Transactional(readOnly = true)
