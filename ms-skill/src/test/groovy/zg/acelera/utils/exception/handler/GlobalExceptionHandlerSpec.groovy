@@ -11,7 +11,7 @@ class GlobalExceptionHandlerSpec extends Specification {
     @Subject
     GlobalExceptionHandler handler = new GlobalExceptionHandler()
 
-    def "illegal argument exception returns conflict"() {
+    def "illegal argument exception returns bad request"() {
         given:
         WebRequest request = Mock()
         request.getDescription(false) >> "uri=/api/skills"
@@ -22,10 +22,10 @@ class GlobalExceptionHandlerSpec extends Specification {
                 request)
 
         then:
-        response.statusCode == HttpStatus.CONFLICT
+        response.statusCode == HttpStatus.BAD_REQUEST
         response.body instanceof CustomError
         response.body.error == "Skill already exists"
         response.body.path == "uri=/api/skills"
-        response.body.status == HttpStatus.CONFLICT.value()
+        response.body.status == HttpStatus.BAD_REQUEST.value()
     }
 }

@@ -26,9 +26,9 @@ class GlobalExceptionHandler {
         CustomError<String> error = new CustomError<>(
                 e.getMessage(),
                 request.getDescription(false),
-                HttpStatus.CONFLICT)
+                HttpStatus.BAD_REQUEST)
 
-        return new ResponseEntity<>(error, HttpStatus.CONFLICT)
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST)
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

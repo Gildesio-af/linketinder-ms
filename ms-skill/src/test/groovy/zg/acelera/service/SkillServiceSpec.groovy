@@ -112,9 +112,67 @@ class SkillServiceSpec extends Specification {
         skillService.save(dto)
 
         then:
-        def exception = thrown(IllegalArgumentException)
+        def exception = thrown(zg.acelera.utils.exception.DuplicateResourceException)
         exception.message == "Skill with name 'Java' already exists"
         0 * skillRepository.save(_)
+    }
+
+    def "saveAll creates every skill"() {
+        given:
+        def java = new SkillCreateDTO(name: "  Java  ")
+        def groovy = new SkillCreateDTO(name: "Groovy")
+        def savedSkills = [
+                new Skill(id: UUID.randomUUID(), name: "Java"),
+                new Skill(id: UUID.randomUUID(), name: "Groovy")
+        ]
+        skillRepository.findByNameIgnoreCase("Java") >> Optional.empty()
+        skillRepository.findByNameIgnoreCase("Groovy") >> Optional.empty()
+        skillRepository.saveAll(_ as List<Skill>) >> savedSkills
+
+        when:
+        def response = skillService.saveAll([java, groovy])
+
+        then:
+        response*.name == ["Java", "Groovy"]
+    }
+
+    def "saveAll rejects an empty batch"() {
+        when:
+        skillService.saveAll([])
+
+        then:
+        IllegalArgumentException exception = thrown()
+        exception.message == "At least one skill is required"
+        0 * skillRepository._
+    }
+
+    def "saveAll rejects duplicate names regardless of casing"() {
+        given:
+        def java = new SkillCreateDTO(name: "Java")
+        def javaAgain = new SkillCreateDTO(name: " java ")
+
+        when:
+        skillService.saveAll([java, javaAgain])
+
+        then:
+        zg.acelera.utils.exception.DuplicateResourceException exception = thrown()
+        exception.message == "Duplicate skill name in batch: Java"
+        0 * skillRepository._
+    }
+
+    def "saveAll rejects an existing name"() {
+        given:
+        def java = new SkillCreateDTO(name: "Java")
+        skillRepository.findByNameIgnoreCase("Java") >>
+                Optional.of(new Skill(id: UUID.randomUUID(), name: "Java"))
+
+        when:
+        skillService.saveAll([java])
+
+        then:
+        zg.acelera.utils.exception.DuplicateResourceException exception = thrown()
+        exception.message == "Skill with name 'Java' already exists"
+        0 * skillRepository.saveAll(_)
     }
 
     def "delete removes an existing skill"() {

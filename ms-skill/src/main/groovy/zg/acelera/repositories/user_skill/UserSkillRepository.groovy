@@ -5,7 +5,9 @@ import zg.acelera.domain.UserSkillId
 
 interface UserSkillRepository {
     List<UserSkill> findByUserId(UUID userId)
+    List<UserSkill> findByUserIds(Set<UUID> userIds)
     Optional<UserSkill> findByUserIdAndSkillId(UserSkillId id)
     UserSkill save(UserSkill userSkill)
+    List<UserSkill> saveAll(List<UserSkill> userSkills)
     void delete(UserSkillId id)
 }

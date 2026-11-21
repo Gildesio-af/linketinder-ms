@@ -1,9 +1,9 @@
-package zg.acelera.dto.job_skill
+package zg.acelera.dto.skill
 
 import jakarta.validation.constraints.NotNull
 import zg.acelera.domain.SkillLevel
 
-class JobSkillCreateDTO {
+class SkillAssociationCreateDTO {
     @NotNull(message = "Skill id cannot be null")
     private UUID skillId
 

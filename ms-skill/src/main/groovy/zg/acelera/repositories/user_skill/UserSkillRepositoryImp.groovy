@@ -18,6 +18,11 @@ class UserSkillRepositoryImp implements UserSkillRepository {
 
 
     @Override
+    List<UserSkill> findByUserIds(Set<UUID> userIds) {
+        return userSkillRepositoryJpa.findAllByUserIds(userIds)
+    }
+
+    @Override
     Optional<UserSkill> findByUserIdAndSkillId(UserSkillId id) {
         return userSkillRepositoryJpa.findById(id)
     }
@@ -25,6 +30,11 @@ class UserSkillRepositoryImp implements UserSkillRepository {
     @Override
     UserSkill save(UserSkill userSkill) {
         return userSkillRepositoryJpa.save(userSkill)
+    }
+
+    @Override
+    List<UserSkill> saveAll(List<UserSkill> userSkills) {
+        return userSkillRepositoryJpa.saveAll(userSkills)
     }
 
     @Override

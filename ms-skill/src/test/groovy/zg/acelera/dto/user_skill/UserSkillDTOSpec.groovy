@@ -7,6 +7,7 @@ import zg.acelera.domain.Skill
 import zg.acelera.domain.SkillLevel
 import zg.acelera.domain.UserSkill
 import zg.acelera.domain.UserSkillId
+import zg.acelera.dto.skill.SkillAssociationCreateDTO
 
 class UserSkillDTOSpec extends Specification {
 
@@ -14,7 +15,7 @@ class UserSkillDTOSpec extends Specification {
 
     def "create DTO validates valid values"() {
         given:
-        UserSkillCreateDTO dto = new UserSkillCreateDTO(
+        SkillAssociationCreateDTO dto = new SkillAssociationCreateDTO(
                 skillId: UUID.randomUUID(),
                 level: SkillLevel.ADVANCED)
 
@@ -25,7 +26,7 @@ class UserSkillDTOSpec extends Specification {
     @Unroll
     def "create DTO rejects invalid #field"() {
         given:
-        UserSkillCreateDTO dto = new UserSkillCreateDTO(skillId: skillId, level: level)
+        SkillAssociationCreateDTO dto = new SkillAssociationCreateDTO(skillId: skillId, level: level)
 
         expect:
         !validator.validate(dto).empty

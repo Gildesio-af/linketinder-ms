@@ -12,6 +12,8 @@ import zg.acelera.msnucleo.dto.candidate.CandidateCreateDTO
 import zg.acelera.msnucleo.dto.candidate.CandidateMatchResponseDTO
 import zg.acelera.msnucleo.dto.candidate.CandidateResponseDTO
 import zg.acelera.msnucleo.dto.candidate.CandidateUpdateDTO
+import zg.acelera.msnucleo.dto.ms_skill.SkillResponseDTO
+import zg.acelera.msnucleo.infrastructure.client.SkillClient
 import zg.acelera.msnucleo.repositories.address.AddressRepository
 import zg.acelera.msnucleo.repositories.candidate.CandidateRepository
 import zg.acelera.msnucleo.repositories.user.UserRepository
@@ -23,32 +25,45 @@ class CandidateService {
     private final UserRepository userRepository
     private final AddressRepository addressRepository
     private final UserService userService
+    private final SkillClient skillClient
 
     CandidateService(CandidateRepository candidateRepository,
                      UserRepository userRepository,
                      AddressRepository addressRepository,
-                     UserService userService) {
+                     UserService userService,
+                     SkillClient skillClient) {
         this.candidateRepository = candidateRepository
         this.userRepository = userRepository
         this.addressRepository = addressRepository
         this.userService = userService
+        this.skillClient = skillClient
     }
 
     @Transactional(readOnly = true)
     CandidateResponseDTO findById(UUID id) {
         Candidate candidate = findEntity(id)
-        CandidateResponseDTO.fromDomain(candidate, findAddresses(id))
+        CandidateResponseDTO.fromDomain(candidate, findAddresses(id), findSkills(id))
     }
 
     @Transactional(readOnly = true)
     CandidateMatchResponseDTO findMatchedCandidate(UUID id) {
-        CandidateMatchResponseDTO.fromDomain(findEntity(id))
+        Candidate candidate = findEntity(id)
+        CandidateMatchResponseDTO.fromDomain(candidate, findSkills(id))
     }
 
     @Transactional(readOnly = true)
     Page<CandidateResponseDTO> findAll(Pageable pageable) {
-        candidateRepository.findAll(pageable).map {
-            toResponse(it)
+        Page<Candidate> page = candidateRepository.findAll(pageable)
+        if (page.isEmpty())
+            return page.map { toResponse(it, []) }
+
+        List<UUID> userIds = page.content.collect { it.userId }.unique()
+        Map<UUID, List<SkillResponseDTO>> skillsByUser = [:]
+        userIds.collate(100).each { batch ->
+            skillsByUser.putAll(skillClient.getSkillsByUserIds(batch))
+        }
+        page.map { candidate ->
+            toResponse(candidate, skillsByUser.getOrDefault(candidate.userId, []))
         }
     }
 
@@ -56,7 +71,8 @@ class CandidateService {
     CandidateResponseDTO save(CandidateCreateDTO dto) {
         User user = userService.create(dto.user, UserRole.CANDIDATE)
         Candidate candidate = createCandidate(user, dto)
-        toResponse(candidateRepository.save(candidate))
+        Candidate savedCandidate = candidateRepository.save(candidate)
+        CandidateResponseDTO.fromDomain(savedCandidate, findAddresses(savedCandidate.userId), [])
     }
 
     @Transactional
@@ -64,7 +80,8 @@ class CandidateService {
         Candidate candidate = findEntity(id)
         updateUser(candidate.user, dto, id)
         updateCandidate(candidate, dto, id)
-        toResponse(candidateRepository.save(candidate))
+        Candidate savedCandidate = candidateRepository.save(candidate)
+        CandidateResponseDTO.fromDomain(savedCandidate, findAddresses(id), findSkills(id))
     }
 
     @Transactional
@@ -84,8 +101,15 @@ class CandidateService {
         addressRepository.findByUserId(userId).collect { AddressResponseDTO.fromDomain(it) }
     }
 
-    private CandidateResponseDTO toResponse(Candidate candidate) {
-        CandidateResponseDTO.fromDomain(candidate, findAddresses(candidate.userId))
+    private List<SkillResponseDTO> findSkills(UUID userId) {
+        if (skillClient == null)
+            return []
+        List<SkillResponseDTO> skills = skillClient.getSkillsByUserId(userId)
+        skills ?: []
+    }
+
+    private CandidateResponseDTO toResponse(Candidate candidate, List<SkillResponseDTO> skills) {
+        CandidateResponseDTO.fromDomain(candidate, findAddresses(candidate.userId), skills)
     }
 
     private Candidate createCandidate(User user, CandidateCreateDTO dto) {

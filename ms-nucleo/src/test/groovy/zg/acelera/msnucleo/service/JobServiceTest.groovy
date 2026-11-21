@@ -11,6 +11,8 @@ import zg.acelera.msnucleo.domain.User
 import zg.acelera.msnucleo.dto.job.JobCreateDTO
 import zg.acelera.msnucleo.dto.job.JobResponseDTO
 import zg.acelera.msnucleo.dto.job.JobUpdateDTO
+import zg.acelera.msnucleo.dto.ms_skill.SkillResponseDTO
+import zg.acelera.msnucleo.infrastructure.client.SkillClient
 import zg.acelera.msnucleo.repositories.address.AddressRepository
 import zg.acelera.msnucleo.repositories.company.CompanyRepository
 import zg.acelera.msnucleo.repositories.job.JobRepository
@@ -20,13 +22,15 @@ class JobServiceTest extends Specification {
     JobRepository jobRepository
     AddressRepository addressRepository
     CompanyRepository companyRepository
+    SkillClient skillClient
     JobService service
 
     def setup() {
         jobRepository = Mock()
         addressRepository = Mock()
         companyRepository = Mock()
-        service = new JobService(jobRepository, addressRepository, companyRepository)
+        skillClient = Mock()
+        service = new JobService(jobRepository, addressRepository, companyRepository, skillClient)
     }
 
     void "findById returns job"() {
@@ -34,6 +38,7 @@ class JobServiceTest extends Specification {
         UUID id = UUID.randomUUID()
         Job job = buildJob(id)
         jobRepository.findById(id) >> Optional.of(job)
+        skillClient.getSkillsByJobId(id) >> [new SkillResponseDTO(skillName: 'Groovy')]
 
         when:
         JobResponseDTO result = service.findById(id)
@@ -42,6 +47,7 @@ class JobServiceTest extends Specification {
         result.id == id
         result.name == 'Java Developer'
         result.description == 'Backend development'
+        result.skills*.skillName == ['Groovy']
     }
 
     void "findById throws when job does not exist"() {
@@ -68,6 +74,33 @@ class JobServiceTest extends Specification {
         then:
         result.totalElements == 1
         result.content[0].name == 'Java Developer'
+    }
+
+    void "findAll fetches skills once for the page and matches them by job id"() {
+        given:
+        PageRequest pageable = PageRequest.of(0, 10)
+        Job first = buildJob(UUID.randomUUID())
+        Job second = buildJob(UUID.randomUUID())
+        jobRepository.findAll(pageable) >> new PageImpl([first, second], pageable, 2)
+
+        when:
+        Page<JobResponseDTO> result = service.findAll(pageable)
+
+        then:
+        1 * skillClient.getSkillsByJobIds({ (it as Set) == ([first.id, second.id] as Set) }) >>
+                [(second.id): [new SkillResponseDTO(skillName: 'Java')], (first.id): []]
+        result.content[0].skills == []
+        result.content[1].skills*.skillName == ['Java']
+    }
+
+    void "findAll does not call ms-skill for an empty page"() {
+        given:
+        PageRequest pageable = PageRequest.of(0, 10)
+        jobRepository.findAll(pageable) >> new PageImpl([], pageable, 0)
+
+        expect:
+        service.findAll(pageable).empty
+        0 * skillClient._
     }
 
     void "findByPublisherId validates publisher and maps jobs"() {

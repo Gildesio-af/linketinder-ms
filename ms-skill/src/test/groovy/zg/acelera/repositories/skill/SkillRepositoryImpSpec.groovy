@@ -52,6 +52,19 @@ class SkillRepositoryImpSpec extends Specification {
         repository.save(skill) == skill
     }
 
+    def "saveAll delegates one batch to the JPA repository"() {
+        given:
+        def skills = [new Skill(name: "Java"), new Skill(name: "Groovy")]
+        jpaRepository.saveAll(_ as Iterable) >> skills
+
+        when:
+        def result = repository.saveAll(skills)
+
+        then:
+        result == skills
+        1 * jpaRepository.saveAll(_ as Iterable) >> skills
+    }
+
     def "existsById delegates to the JPA repository"() {
         given:
         UUID id = UUID.randomUUID()

@@ -1,16 +1,19 @@
 package zg.acelera.controller
 
 import jakarta.validation.Valid
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
-import zg.acelera.dto.user_skill.UserSkillCreateDTO
+import zg.acelera.dto.skill.SkillAssociationCreateDTO
 import zg.acelera.dto.user_skill.UserSkillResponseDTO
 import zg.acelera.dto.user_skill.UserSkillUpdateDTO
 import zg.acelera.service.UserSkillService
 
 @RestController
-@RequestMapping("/users/{userId}/skills")
+@RequestMapping("/users/skills")
 class UserSkillController {
     private final UserSkillService userSkillService
 
@@ -18,43 +21,60 @@ class UserSkillController {
         this.userSkillService = userSkillService
     }
 
-    @GetMapping
+    @GetMapping("/batch")
+    ResponseEntity<Map<UUID, List<UserSkillResponseDTO>>> findByUserIds(
+            @RequestParam(name = "userIds", defaultValue = "") List<UUID> userIds) {
+        return ResponseEntity.ok(userSkillService.findByUserIds(userIds))
+    }
+
+    @GetMapping("/{userId}")
     ResponseEntity<List<UserSkillResponseDTO>> findByUserId(@PathVariable("userId") UUID userId) {
         return ResponseEntity.ok(userSkillService.findByUserId(userId))
     }
 
-    @GetMapping("/{skillId}")
-    ResponseEntity<UserSkillResponseDTO> findById(
-            @PathVariable("userId") UUID userId,
-            @PathVariable("skillId") UUID skillId) {
+    @GetMapping("/{userId}/{skillId}")
+    ResponseEntity<UserSkillResponseDTO> findById(@PathVariable("userId") UUID userId,
+                                                  @PathVariable("skillId") UUID skillId) {
         return ResponseEntity.ok(userSkillService.findById(userId, skillId))
     }
 
+    @PreAuthorize("hasRole('CANDIDATE')")
     @PostMapping
-    ResponseEntity<UserSkillResponseDTO> save(
-            @PathVariable("userId") UUID userId,
-            @Valid @RequestBody UserSkillCreateDTO userSkillCreateDTO) {
-        UserSkillResponseDTO savedUserSkill = userSkillService.save(userId, userSkillCreateDTO)
+    ResponseEntity<UserSkillResponseDTO> save(@Valid @RequestBody SkillAssociationCreateDTO userSkillCreateDTO,
+                                              Authentication auth) {
+        UUID authenticatedUserId = (UUID) auth.principal
+        UserSkillResponseDTO savedUserSkill = userSkillService.save(authenticatedUserId, userSkillCreateDTO)
         URI location = ServletUriComponentsBuilder
-                .fromCurrentRequest()
-                .path("/{skillId}")
-                .buildAndExpand(savedUserSkill.skillId)
+                .fromCurrentContextPath()
+                .path("/users/skills/{userId}/{skillId}")
+                .buildAndExpand(savedUserSkill.userId, savedUserSkill.skillId)
                 .toUri()
         return ResponseEntity.created(location).body(savedUserSkill)
     }
 
-    @PutMapping("/{skillId}")
-    ResponseEntity<UserSkillResponseDTO> update(
-            @PathVariable("userId") UUID userId,
-            @PathVariable("skillId") UUID skillId,
-            @Valid @RequestBody UserSkillUpdateDTO userSkillUpdateDTO) {
-        return ResponseEntity.ok(userSkillService.update(userId, skillId, userSkillUpdateDTO))
+    @PreAuthorize("hasRole('CANDIDATE')")
+    @PostMapping("/batch")
+    ResponseEntity<List<UserSkillResponseDTO>> saveAll(@Valid @RequestBody List<SkillAssociationCreateDTO> skills,
+                                                       Authentication auth) {
+        UUID authenticatedUserId = (UUID) auth.principal
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(userSkillService.saveAll(authenticatedUserId, skills))
     }
 
+    @PreAuthorize("hasRole('CANDIDATE')")
+    @PutMapping("/{skillId}")
+    ResponseEntity<UserSkillResponseDTO> update(@PathVariable("skillId") UUID skillId,
+                                                @Valid @RequestBody UserSkillUpdateDTO userSkillUpdateDTO,
+                                                Authentication auth) {
+        UUID authenticatedUserId = (UUID) auth.principal
+        return ResponseEntity.ok(userSkillService.update(authenticatedUserId, skillId, userSkillUpdateDTO))
+    }
+
+    @PreAuthorize("hasRole('CANDIDATE')")
     @DeleteMapping("/{skillId}")
-    ResponseEntity<?> delete(
-            @PathVariable("userId") UUID userId,
-            @PathVariable("skillId") UUID skillId) {
+    ResponseEntity<?> delete(@PathVariable("skillId") UUID skillId,
+                             Authentication auth) {
+        UUID userId = (UUID) auth.principal
         userSkillService.delete(userId, skillId)
         return ResponseEntity.noContent().build()
     }

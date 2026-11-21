@@ -3,6 +3,7 @@ package zg.acelera.controller
 import jakarta.validation.Valid
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
@@ -43,6 +44,13 @@ class SkillController {
                 .buildAndExpand(savedSkill.id)
                 .toUri()
         return ResponseEntity.created(location).body(savedSkill)
+    }
+
+    @PostMapping("/batch")
+    ResponseEntity<List<SkillResponseDTO>> saveAll(
+            @Valid @RequestBody List<SkillCreateDTO> skillCreateDTOs) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(skillService.saveAll(skillCreateDTOs))
     }
 
     @DeleteMapping("/{id}")
