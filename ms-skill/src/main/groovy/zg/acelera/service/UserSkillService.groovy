@@ -2,9 +2,10 @@ package zg.acelera.service
 
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import zg.acelera.domain.Skill
 import zg.acelera.domain.UserSkill
 import zg.acelera.domain.UserSkillId
-import zg.acelera.dto.user_skill.UserSkillCreateDTO
+import zg.acelera.dto.skill.SkillAssociationCreateDTO
 import zg.acelera.dto.user_skill.UserSkillResponseDTO
 import zg.acelera.dto.user_skill.UserSkillUpdateDTO
 import zg.acelera.repositories.skill.SkillRepository
@@ -34,19 +35,31 @@ class UserSkillService {
     }
 
     @Transactional
-    UserSkillResponseDTO save(UUID userId, UserSkillCreateDTO userSkillCreateDTO) {
+    UserSkillResponseDTO save(UUID userId, SkillAssociationCreateDTO userSkillCreateDTO) {
         UserSkillId id = new UserSkillId(userId: userId, skillId: userSkillCreateDTO.skillId())
         if (userSkillRepository.findByUserIdAndSkillId(id).isPresent())
             throw new IllegalArgumentException("Skill is already associated with user")
 
-        UserSkill userSkill = new UserSkill(
-                id: id,
-                skill: skillRepository.findById(userSkillCreateDTO.skillId())
-                        .orElseThrow { new EntityNotFoundException(
-                                "Skill not found with id: ${userSkillCreateDTO.skillId()}") },
-                level: userSkillCreateDTO.level())
+        Skill skill = skillRepository.findById(userSkillCreateDTO.skillId())
+                .orElseThrow { new EntityNotFoundException(
+                        "Skill not found with id: ${userSkillCreateDTO.skillId()}") }
+        UserSkill userSkill = createUserSkill(id, userSkillCreateDTO, skill)
 
         return UserSkillResponseDTO.fromDomain(userSkillRepository.save(userSkill))
+    }
+
+    @Transactional
+    List<UserSkillResponseDTO> saveAll(UUID userId, List<SkillAssociationCreateDTO> skills) {
+        validateBatch(skills)
+
+        Set<UUID> skillIds = extractUniqueSkillIds(skills)
+        Map<UUID, Skill> existingSkills = loadExistingSkills(skillIds)
+        validateNoExistingUserSkills(userId, skillIds)
+
+        List<UserSkill> userSkills = buildUserSkills(userId, skills, existingSkills)
+        List<UserSkill> savedUserSkills = userSkillRepository.saveAll(userSkills)
+
+        return savedUserSkills.collect { UserSkillResponseDTO.fromDomain(it) }
     }
 
     @Transactional
@@ -69,5 +82,54 @@ class UserSkillService {
         UserSkillId id = new UserSkillId(userId: userId, skillId: skillId)
         return userSkillRepository.findByUserIdAndSkillId(id)
                 .orElseThrow { new EntityNotFoundException("User skill not found") }
+    }
+
+    private static void validateBatch(List<SkillAssociationCreateDTO> skills) {
+        if (skills == null || skills.isEmpty())
+            throw new IllegalArgumentException("At least one user skill is required")
+    }
+
+    private static Set<UUID> extractUniqueSkillIds(List<SkillAssociationCreateDTO> skills) {
+        Set<UUID> skillIds = new LinkedHashSet<>()
+        for (SkillAssociationCreateDTO skill : skills) {
+            if (skill.skillId() == null)
+                throw new IllegalArgumentException("Skill id cannot be null")
+            if (!skillIds.add(skill.skillId()))
+                throw new IllegalArgumentException("Duplicate skill id in batch: ${skill.skillId()}")
+        }
+        return skillIds
+    }
+
+    private Map<UUID, Skill> loadExistingSkills(Set<UUID> skillIds) {
+        List<Skill> foundSkills = skillRepository.findAllById(skillIds.toList()) ?: []
+        Map<UUID, Skill> skillsById = foundSkills.collectEntries { [it.id, it] }
+
+        for (UUID skillId : skillIds) {
+            if (!skillsById.containsKey(skillId))
+                throw new EntityNotFoundException("Skill not found with id: ${skillId}")
+        }
+        return skillsById
+    }
+
+    private void validateNoExistingUserSkills(UUID userId, Set<UUID> skillIds) {
+        List<UserSkill> existingUserSkills = userSkillRepository.findByUserId(userId) ?: []
+        Set<UUID> existingSkillIds = existingUserSkills.collect { it.id.skillId } as Set
+
+        for (UUID skillId : skillIds) {
+            if (existingSkillIds.contains(skillId))
+                throw new IllegalArgumentException("Skill is already associated with user")
+        }
+    }
+
+    private static List<UserSkill> buildUserSkills(UUID userId, List<SkillAssociationCreateDTO> skills,
+                                                   Map<UUID, Skill> skillsById) {
+        return skills.collect { SkillAssociationCreateDTO skill ->
+            UserSkillId id = new UserSkillId(userId: userId, skillId: skill.skillId())
+            createUserSkill(id, skill, skillsById[skill.skillId()])
+        }
+    }
+
+    private static UserSkill createUserSkill(UserSkillId id, SkillAssociationCreateDTO dto, Skill skill) {
+        new UserSkill(id: id, skill: skill, level: dto.level())
     }
 }

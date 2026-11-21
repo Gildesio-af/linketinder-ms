@@ -1,12 +1,13 @@
 package zg.acelera.controller
 
 import jakarta.validation.Valid
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
-import zg.acelera.dto.user_skill.UserSkillCreateDTO
+import zg.acelera.dto.skill.SkillAssociationCreateDTO
 import zg.acelera.dto.user_skill.UserSkillResponseDTO
 import zg.acelera.dto.user_skill.UserSkillUpdateDTO
 import zg.acelera.service.UserSkillService
@@ -33,7 +34,7 @@ class UserSkillController {
 
     @PreAuthorize("hasRole('CANDIDATE')")
     @PostMapping
-    ResponseEntity<UserSkillResponseDTO> save(@Valid @RequestBody UserSkillCreateDTO userSkillCreateDTO,
+    ResponseEntity<UserSkillResponseDTO> save(@Valid @RequestBody SkillAssociationCreateDTO userSkillCreateDTO,
                                               Authentication auth) {
         UUID authenticatedUserId = (UUID) auth.principal
         UserSkillResponseDTO savedUserSkill = userSkillService.save(authenticatedUserId, userSkillCreateDTO)
@@ -43,6 +44,15 @@ class UserSkillController {
                 .buildAndExpand(savedUserSkill.skillId)
                 .toUri()
         return ResponseEntity.created(location).body(savedUserSkill)
+    }
+
+    @PreAuthorize("hasRole('CANDIDATE')")
+    @PostMapping("/batch")
+    ResponseEntity<List<UserSkillResponseDTO>> saveAll(@Valid @RequestBody List<SkillAssociationCreateDTO> skills,
+                                                       Authentication auth) {
+        UUID authenticatedUserId = (UUID) auth.principal
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(userSkillService.saveAll(authenticatedUserId, skills))
     }
 
     @PreAuthorize("hasRole('CANDIDATE')")

@@ -28,6 +28,11 @@ class UserSkillRepositoryImp implements UserSkillRepository {
     }
 
     @Override
+    List<UserSkill> saveAll(List<UserSkill> userSkills) {
+        return userSkillRepositoryJpa.saveAll(userSkills)
+    }
+
+    @Override
     void delete(UserSkillId id) {
         userSkillRepositoryJpa.deleteById(id)
     }

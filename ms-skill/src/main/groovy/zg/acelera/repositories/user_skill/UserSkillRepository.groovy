@@ -7,5 +7,6 @@ interface UserSkillRepository {
     List<UserSkill> findByUserId(UUID userId)
     Optional<UserSkill> findByUserIdAndSkillId(UserSkillId id)
     UserSkill save(UserSkill userSkill)
+    List<UserSkill> saveAll(List<UserSkill> userSkills)
     void delete(UserSkillId id)
 }
