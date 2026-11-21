@@ -11,6 +11,9 @@ interface SkillClient {
     @GetMapping("/jobs/{jobId}/skills")
     List<SkillResponseDTO> getSkillsByJobId(@PathVariable("jobId") UUID jobId)
 
+    @GetMapping("/jobs/skills/batch")
+    Map<UUID, List<SkillResponseDTO>> getSkillsByJobIds(@RequestParam("jobIds") List<UUID> jobIds)
+
     @GetMapping("/users/skills/{userId}")
     List<SkillResponseDTO> getSkillsByUserId(@PathVariable("userId") UUID userId)
 

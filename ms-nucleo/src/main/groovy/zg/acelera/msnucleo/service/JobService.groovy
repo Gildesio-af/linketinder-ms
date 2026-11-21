@@ -10,6 +10,8 @@ import zg.acelera.msnucleo.domain.Job
 import zg.acelera.msnucleo.dto.job.JobCreateDTO
 import zg.acelera.msnucleo.dto.job.JobResponseDTO
 import zg.acelera.msnucleo.dto.job.JobUpdateDTO
+import zg.acelera.msnucleo.dto.ms_skill.SkillResponseDTO
+import zg.acelera.msnucleo.infrastructure.client.SkillClient
 import zg.acelera.msnucleo.repositories.address.AddressRepository
 import zg.acelera.msnucleo.repositories.company.CompanyRepository
 import zg.acelera.msnucleo.repositories.job.JobRepository
@@ -20,30 +22,33 @@ class JobService {
     private final JobRepository jobRepository
     private final AddressRepository addressRepository
     private final CompanyRepository companyRepository
+    private final SkillClient skillClient
 
     JobService(JobRepository jobRepository,
                AddressRepository addressRepository,
-               CompanyRepository companyRepository) {
+               CompanyRepository companyRepository,
+               SkillClient skillClient) {
         this.jobRepository = jobRepository
         this.addressRepository = addressRepository
         this.companyRepository = companyRepository
+        this.skillClient = skillClient
     }
 
     @Transactional(readOnly = true)
     JobResponseDTO findById(UUID id) {
-        JobResponseDTO.fromDomain(findEntity(id))
+        Job job = findEntity(id)
+        JobResponseDTO.fromDomain(job, skillClient.getSkillsByJobId(job.id))
     }
 
     @Transactional(readOnly = true)
     Page<JobResponseDTO> findAll(Pageable pageable) {
-        jobRepository.findAll(pageable).map { JobResponseDTO.fromDomain(it) }
+        withSkills(jobRepository.findAll(pageable))
     }
 
     @Transactional(readOnly = true)
     Page<JobResponseDTO> findByPublisherId(UUID publisherId, Pageable pageable) {
         findPublisher(publisherId)
-        jobRepository.findByPublisherId(publisherId, pageable)
-                .map { JobResponseDTO.fromDomain(it) }
+        withSkills(jobRepository.findByPublisherId(publisherId, pageable))
     }
 
     @Transactional
@@ -78,6 +83,16 @@ class JobService {
     private Job findEntity(UUID id) {
         jobRepository.findById(id)
                 .orElseThrow { new EntityNotFoundException("Job not found with id: $id") }
+    }
+
+    private Page<JobResponseDTO> withSkills(Page<Job> page) {
+        if (page.isEmpty())
+            return page.map { JobResponseDTO.fromDomain(it) }
+        Map<UUID, List<SkillResponseDTO>> skillsByJob = [:]
+        page.content.collect { it.id }.unique().collate(50).each { batch ->
+            skillsByJob.putAll(skillClient.getSkillsByJobIds(batch))
+        }
+        page.map { job -> JobResponseDTO.fromDomain(job, skillsByJob.getOrDefault(job.id, [])) }
     }
 
     private Address findAddress(UUID id) {
