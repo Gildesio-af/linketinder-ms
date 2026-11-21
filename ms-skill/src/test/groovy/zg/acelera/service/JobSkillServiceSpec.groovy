@@ -22,10 +22,12 @@ class JobSkillServiceSpec extends Specification {
 
     UUID jobId
     UUID skillId
+    UUID companyId
 
     def setup() {
         jobId = UUID.randomUUID()
         skillId = UUID.randomUUID()
+        companyId = UUID.randomUUID()
     }
 
     def "findByJobId returns the mapped skills"() {
@@ -79,7 +81,7 @@ class JobSkillServiceSpec extends Specification {
         jobSkillRepository.save(_ as JobSkill) >> { JobSkill saved -> saved }
 
         when:
-        def response = service.save(jobId, dto)
+        def response = service.save(jobId, companyId, dto)
 
         then:
         response.jobId == jobId
@@ -95,7 +97,7 @@ class JobSkillServiceSpec extends Specification {
                 Optional.of(createJobSkill(SkillLevel.BEGINNER))
 
         when:
-        service.save(jobId, dto)
+        service.save(jobId, companyId, dto)
 
         then:
         def exception = thrown(IllegalArgumentException)
@@ -111,7 +113,7 @@ class JobSkillServiceSpec extends Specification {
         skillRepository.findById(skillId) >> Optional.empty()
 
         when:
-        service.save(jobId, dto)
+        service.save(jobId, companyId, dto)
 
         then:
         def exception = thrown(EntityNotFoundException)
@@ -121,15 +123,26 @@ class JobSkillServiceSpec extends Specification {
 
     def "saveAll creates every skill and assigns the company id"() {
         given:
-        UUID companyId = UUID.randomUUID()
         UUID secondSkillId = UUID.randomUUID()
         def java = new JobSkillCreateDTO(skillId: skillId, level: SkillLevel.BEGINNER)
         def groovy = new JobSkillCreateDTO(skillId: secondSkillId, level: SkillLevel.ADVANCED)
         def javaSkill = new Skill(id: skillId, name: "Java")
         def groovySkill = new Skill(id: secondSkillId, name: "Groovy")
+        def savedJobSkills = [
+                new JobSkill(
+                        id: new JobSkillId(jobId: jobId, skillId: skillId),
+                        companyId: companyId,
+                        skill: javaSkill,
+                        level: SkillLevel.BEGINNER),
+                new JobSkill(
+                        id: new JobSkillId(jobId: jobId, skillId: secondSkillId),
+                        companyId: companyId,
+                        skill: groovySkill,
+                        level: SkillLevel.ADVANCED)
+        ]
         skillRepository.findAllById([skillId, secondSkillId]) >> [javaSkill, groovySkill]
         jobSkillRepository.findByJobId(jobId) >> []
-        jobSkillRepository.saveAll(_ as List<JobSkill>) >> { List<JobSkill> saved -> saved }
+        jobSkillRepository.saveAll(_ as List<JobSkill>) >> savedJobSkills
 
         when:
         def response = service.saveAll(jobId, companyId, [java, groovy])
@@ -190,7 +203,7 @@ class JobSkillServiceSpec extends Specification {
         jobSkillRepository.save(_ as JobSkill) >> { JobSkill saved -> saved }
 
         when:
-        def response = service.update(jobId, skillId, dto)
+        def response = service.update(jobId, skillId, companyId, dto)
 
         then:
         response.level == SkillLevel.ADVANCED
@@ -203,7 +216,7 @@ class JobSkillServiceSpec extends Specification {
         jobSkillRepository.findByJobIdAndSkillId(_ as JobSkillId) >> Optional.empty()
 
         when:
-        service.update(jobId, skillId, dto)
+        service.update(jobId, skillId, companyId, dto)
 
         then:
         thrown(EntityNotFoundException)
@@ -216,7 +229,7 @@ class JobSkillServiceSpec extends Specification {
                 Optional.of(createJobSkill(SkillLevel.BEGINNER))
 
         when:
-        service.delete(jobId, skillId)
+        service.delete(jobId, skillId, companyId)
 
         then:
         1 * jobSkillRepository.delete({ JobSkillId id ->
@@ -229,7 +242,7 @@ class JobSkillServiceSpec extends Specification {
         jobSkillRepository.findByJobIdAndSkillId(_ as JobSkillId) >> Optional.empty()
 
         when:
-        service.delete(jobId, skillId)
+        service.delete(jobId, skillId, companyId)
 
         then:
         def exception = thrown(EntityNotFoundException)
@@ -240,6 +253,7 @@ class JobSkillServiceSpec extends Specification {
     private JobSkill createJobSkill(SkillLevel level) {
         return new JobSkill(
                 id: new JobSkillId(jobId: jobId, skillId: skillId),
+                companyId: companyId,
                 skill: new Skill(id: skillId, name: "Java"),
                 level: level)
     }
