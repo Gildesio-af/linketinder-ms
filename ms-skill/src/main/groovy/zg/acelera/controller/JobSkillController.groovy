@@ -1,6 +1,7 @@
 package zg.acelera.controller
 
 import jakarta.validation.Valid
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.core.Authentication
@@ -44,6 +45,16 @@ class JobSkillController {
                 .buildAndExpand(savedJobSkill.skillId)
                 .toUri()
         return ResponseEntity.created(location).body(savedJobSkill)
+    }
+
+    @PreAuthorize("hasRole('COMPANY')")
+    @PostMapping("/batch")
+    ResponseEntity<List<JobSkillResponseDTO>> saveAll(@PathVariable("jobId") UUID jobId,
+                                                      @Valid @RequestBody List<JobSkillCreateDTO> skills,
+                                                      Authentication auth) {
+        UUID companyId = (UUID) auth.principal
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(jobSkillService.saveAll(jobId, companyId, skills))
     }
 
     @PreAuthorize("hasRole('COMPANY')")
