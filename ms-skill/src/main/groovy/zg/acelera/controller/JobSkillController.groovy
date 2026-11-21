@@ -13,7 +13,7 @@ import zg.acelera.dto.job_skill.JobSkillUpdateDTO
 import zg.acelera.service.JobSkillService
 
 @RestController
-@RequestMapping("/jobs/{jobId}/skills")
+@RequestMapping("/jobs")
 class JobSkillController {
     private final JobSkillService jobSkillService
 
@@ -21,19 +21,25 @@ class JobSkillController {
         this.jobSkillService = jobSkillService
     }
 
-    @GetMapping
+    @GetMapping("/skills/batch")
+    ResponseEntity<Map<UUID, List<JobSkillResponseDTO>>> findByJobIds(
+            @RequestParam(name = "jobIds", defaultValue = "") List<UUID> jobIds) {
+        return ResponseEntity.ok(jobSkillService.findByJobIds(jobIds))
+    }
+
+    @GetMapping("/{jobId}/skills")
     ResponseEntity<List<JobSkillResponseDTO>> findByJobId(@PathVariable("jobId") UUID jobId) {
         return ResponseEntity.ok(jobSkillService.findByJobId(jobId))
     }
 
-    @GetMapping("/{skillId}")
+    @GetMapping("/{jobId}/skills/{skillId}")
     ResponseEntity<JobSkillResponseDTO> findById(@PathVariable("jobId") UUID jobId,
                                                  @PathVariable("skillId") UUID skillId) {
         return ResponseEntity.ok(jobSkillService.findById(jobId, skillId))
     }
 
     @PreAuthorize("hasRole('COMPANY')")
-    @PostMapping
+    @PostMapping("/{jobId}/skills")
     ResponseEntity<JobSkillResponseDTO> save(@PathVariable("jobId") UUID jobId,
                                              @Valid @RequestBody SkillAssociationCreateDTO jobSkillCreateDTO,
                                              Authentication auth) {
@@ -48,7 +54,7 @@ class JobSkillController {
     }
 
     @PreAuthorize("hasRole('COMPANY')")
-    @PostMapping("/batch")
+    @PostMapping("/{jobId}/skills/batch")
     ResponseEntity<List<JobSkillResponseDTO>> saveAll(@PathVariable("jobId") UUID jobId,
                                                       @Valid @RequestBody List<SkillAssociationCreateDTO> skills,
                                                       Authentication auth) {
@@ -58,7 +64,7 @@ class JobSkillController {
     }
 
     @PreAuthorize("hasRole('COMPANY')")
-    @PutMapping("/{skillId}")
+    @PutMapping("/{jobId}/skills/{skillId}")
     ResponseEntity<JobSkillResponseDTO> update(@PathVariable("jobId") UUID jobId,
                                                @PathVariable("skillId") UUID skillId,
                                                @Valid @RequestBody JobSkillUpdateDTO jobSkillUpdateDTO,
@@ -68,7 +74,7 @@ class JobSkillController {
     }
 
     @PreAuthorize("hasRole('COMPANY')")
-    @DeleteMapping("/{skillId}")
+    @DeleteMapping("/{jobId}/skills/{skillId}")
     ResponseEntity<?> delete(@PathVariable("jobId") UUID jobId,
                              @PathVariable("skillId") UUID skillId,
                              Authentication auth) {

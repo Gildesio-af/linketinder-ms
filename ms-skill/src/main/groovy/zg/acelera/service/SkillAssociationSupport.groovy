@@ -9,7 +9,17 @@ import zg.acelera.utils.exception.EntityNotFoundException
 
 @PackageScope
 final class SkillAssociationSupport {
+    private static final int MAX_LOOKUP_IDS = 50
+
     private SkillAssociationSupport() {}
+
+    static Set<UUID> validateLookupIds(List<UUID> ids, String parameterName) {
+        if (ids.size() > MAX_LOOKUP_IDS)
+            throw new IllegalArgumentException("At most ${MAX_LOOKUP_IDS} ${parameterName} are allowed per request")
+        if (ids.contains(null))
+            throw new IllegalArgumentException("Each ${parameterName} entry must be a UUID")
+        return new LinkedHashSet<>(ids)
+    }
 
     static Skill loadSkill(SkillRepository repository, UUID skillId) {
         return repository.findById(skillId).orElseThrow { skillNotFound(skillId) }

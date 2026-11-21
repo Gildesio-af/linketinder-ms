@@ -35,6 +35,20 @@ class JobSkillService {
                 .collect { JobSkillResponseDTO.fromDomain(it) }
     }
 
+    @Transactional(readOnly = true)
+    Map<UUID, List<JobSkillResponseDTO>> findByJobIds(List<UUID> jobIds) {
+        Set<UUID> uniqueJobIds = SkillAssociationSupport.validateLookupIds(jobIds, "jobIds")
+        if (uniqueJobIds.isEmpty())
+            return [:]
+
+        Map<UUID, List<JobSkillResponseDTO>> skillsByJobId = [:]
+        uniqueJobIds.each { skillsByJobId[it] = [] }
+        jobSkillRepository.findByJobIds(uniqueJobIds).each { JobSkill jobSkill ->
+            skillsByJobId[jobSkill.id.jobId].add(JobSkillResponseDTO.fromDomain(jobSkill))
+        }
+        return skillsByJobId
+    }
+
     @Transactional
     JobSkillResponseDTO save(UUID jobId, UUID companyId, SkillAssociationCreateDTO jobSkillCreateDTO) {
         JobSkillId id = new JobSkillId(jobId: jobId, skillId: jobSkillCreateDTO.skillId())

@@ -18,6 +18,11 @@ class JobSkillRepositoryImp implements JobSkillRepository {
     }
 
     @Override
+    List<JobSkill> findByJobIds(Set<UUID> jobIds) {
+        return jobSkillRepositoryJpa.findAllByJobIds(jobIds)
+    }
+
+    @Override
     List<JobSkill> saveAll(List<JobSkill> jobSkills) {
         return jobSkillRepositoryJpa.saveAll(jobSkills)
     }
