@@ -39,9 +39,9 @@ class UserSkillController {
         UUID authenticatedUserId = (UUID) auth.principal
         UserSkillResponseDTO savedUserSkill = userSkillService.save(authenticatedUserId, userSkillCreateDTO)
         URI location = ServletUriComponentsBuilder
-                .fromCurrentRequest()
-                .path("/{skillId}")
-                .buildAndExpand(savedUserSkill.skillId)
+                .fromCurrentContextPath()
+                .path("/users/skills/{userId}/{skillId}")
+                .buildAndExpand(savedUserSkill.userId, savedUserSkill.skillId)
                 .toUri()
         return ResponseEntity.created(location).body(savedUserSkill)
     }
