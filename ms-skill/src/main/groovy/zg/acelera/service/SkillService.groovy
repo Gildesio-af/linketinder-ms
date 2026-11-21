@@ -9,6 +9,7 @@ import zg.acelera.dto.skill.SkillCreateDTO
 import zg.acelera.dto.skill.SkillResponseDTO
 import zg.acelera.repositories.skill.SkillRepository
 import zg.acelera.utils.exception.EntityNotFoundException
+import zg.acelera.utils.exception.DuplicateResourceException
 
 @Service
 class SkillService {
@@ -77,7 +78,7 @@ class SkillService {
         for (Skill skill : skills) {
             String normalizedName = skill.name.toLowerCase(Locale.ROOT)
             if (namesByNormalizedName.containsKey(normalizedName))
-                throw new IllegalArgumentException(
+                throw new DuplicateResourceException(
                         "Duplicate skill name in batch: ${namesByNormalizedName[normalizedName]}")
             namesByNormalizedName[normalizedName] = skill.name
         }
@@ -85,6 +86,6 @@ class SkillService {
 
     private void validateUniqueName(String name) {
         if (skillRepository.findByNameIgnoreCase(name).isPresent())
-            throw new IllegalArgumentException("Skill with name '${name}' already exists")
+            throw new DuplicateResourceException("Skill with name '${name}' already exists")
     }
 }

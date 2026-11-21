@@ -11,6 +11,7 @@ import zg.acelera.dto.user_skill.UserSkillUpdateDTO
 import zg.acelera.repositories.skill.SkillRepository
 import zg.acelera.repositories.user_skill.UserSkillRepository
 import zg.acelera.utils.exception.EntityNotFoundException
+import zg.acelera.utils.exception.DuplicateResourceException
 
 @Service
 class UserSkillService {
@@ -38,7 +39,7 @@ class UserSkillService {
     UserSkillResponseDTO save(UUID userId, SkillAssociationCreateDTO userSkillCreateDTO) {
         UserSkillId id = new UserSkillId(userId: userId, skillId: userSkillCreateDTO.skillId())
         if (userSkillRepository.findByUserIdAndSkillId(id).isPresent())
-            throw new IllegalArgumentException("Skill is already associated with user")
+            throw new DuplicateResourceException("Skill is already associated with user")
 
         Skill skill = skillRepository.findById(userSkillCreateDTO.skillId())
                 .orElseThrow { new EntityNotFoundException(
@@ -95,7 +96,7 @@ class UserSkillService {
             if (skill.skillId() == null)
                 throw new IllegalArgumentException("Skill id cannot be null")
             if (!skillIds.add(skill.skillId()))
-                throw new IllegalArgumentException("Duplicate skill id in batch: ${skill.skillId()}")
+                throw new DuplicateResourceException("Duplicate skill id in batch: ${skill.skillId()}")
         }
         return skillIds
     }
@@ -117,7 +118,7 @@ class UserSkillService {
 
         for (UUID skillId : skillIds) {
             if (existingSkillIds.contains(skillId))
-                throw new IllegalArgumentException("Skill is already associated with user")
+                throw new DuplicateResourceException("Skill is already associated with user")
         }
     }
 
