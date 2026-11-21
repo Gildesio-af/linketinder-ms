@@ -41,11 +41,22 @@ class SkillService {
     @Transactional
     SkillResponseDTO save(SkillCreateDTO skillCreateDTO) {
         Skill skill = skillCreateDTO.toDomain()
-        if (skillRepository.findByNameIgnoreCase(skill.name).isPresent())
-            throw new IllegalArgumentException("Skill with name '${skill.name}' already exists")
+        validateUniqueName(skill.name)
 
         Skill savedSkill = skillRepository.save(skill)
         return SkillResponseDTO.fromDomain(savedSkill)
+    }
+
+    @Transactional
+    List<SkillResponseDTO> saveAll(List<SkillCreateDTO> skillCreateDTOs) {
+        validateBatch(skillCreateDTOs)
+
+        List<Skill> skills = skillCreateDTOs.collect { it.toDomain() }
+        validateUniqueNames(skills)
+        skills.each { validateUniqueName(it.name) }
+
+        List<Skill> savedSkills = skillRepository.saveAll(skills)
+        return savedSkills.collect { SkillResponseDTO.fromDomain(it) }
     }
 
     @Transactional
@@ -54,5 +65,26 @@ class SkillService {
             throw new EntityNotFoundException("Skill not found with id: $id")
 
         skillRepository.delete(id)
+    }
+
+    private static void validateBatch(List<SkillCreateDTO> skillCreateDTOs) {
+        if (skillCreateDTOs == null || skillCreateDTOs.isEmpty())
+            throw new IllegalArgumentException("At least one skill is required")
+    }
+
+    private static void validateUniqueNames(List<Skill> skills) {
+        Map<String, String> namesByNormalizedName = new LinkedHashMap<>()
+        for (Skill skill : skills) {
+            String normalizedName = skill.name.toLowerCase(Locale.ROOT)
+            if (namesByNormalizedName.containsKey(normalizedName))
+                throw new IllegalArgumentException(
+                        "Duplicate skill name in batch: ${namesByNormalizedName[normalizedName]}")
+            namesByNormalizedName[normalizedName] = skill.name
+        }
+    }
+
+    private void validateUniqueName(String name) {
+        if (skillRepository.findByNameIgnoreCase(name).isPresent())
+            throw new IllegalArgumentException("Skill with name '${name}' already exists")
     }
 }

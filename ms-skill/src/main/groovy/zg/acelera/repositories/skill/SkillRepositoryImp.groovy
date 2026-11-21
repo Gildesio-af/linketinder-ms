@@ -39,6 +39,11 @@ class SkillRepositoryImp implements SkillRepository {
     }
 
     @Override
+    List<Skill> saveAll(List<Skill> skills) {
+        return skillRepositoryJpa.saveAll(skills)
+    }
+
+    @Override
     boolean existsById(UUID id) {
         return skillRepositoryJpa.existsById(id)
     }

@@ -10,6 +10,7 @@ interface SkillRepository {
     Page<Skill> findAll(Pageable pageable)
     Optional<Skill> findByNameIgnoreCase(String name)
     Skill save(Skill skill)
+    List<Skill> saveAll(List<Skill> skills)
     boolean existsById(UUID id)
     void delete(UUID id)
 }
