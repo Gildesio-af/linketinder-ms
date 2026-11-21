@@ -18,6 +18,11 @@ class UserSkillRepositoryImp implements UserSkillRepository {
 
 
     @Override
+    List<UserSkill> findByUserIds(Set<UUID> userIds) {
+        return userSkillRepositoryJpa.findAllByUserIds(userIds)
+    }
+
+    @Override
     Optional<UserSkill> findByUserIdAndSkillId(UserSkillId id) {
         return userSkillRepositoryJpa.findById(id)
     }
