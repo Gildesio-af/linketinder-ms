@@ -61,9 +61,7 @@ class UserSkillService {
         if (userSkillRepository.findByUserIdAndSkillId(id).isPresent())
             throw new DuplicateResourceException("Skill is already associated with user")
 
-        Skill skill = skillRepository.findById(userSkillCreateDTO.skillId())
-                .orElseThrow { new EntityNotFoundException(
-                        "Skill not found with id: ${userSkillCreateDTO.skillId()}") }
+        Skill skill = SkillAssociationSupport.loadSkill(skillRepository, userSkillCreateDTO.skillId())
         UserSkill userSkill = createUserSkill(id, userSkillCreateDTO, skill)
 
         return UserSkillResponseDTO.fromDomain(userSkillRepository.save(userSkill))
@@ -71,11 +69,12 @@ class UserSkillService {
 
     @Transactional
     List<UserSkillResponseDTO> saveAll(UUID userId, List<SkillAssociationCreateDTO> skills) {
-        validateBatch(skills)
-
-        Set<UUID> skillIds = extractUniqueSkillIds(skills)
-        Map<UUID, Skill> existingSkills = loadExistingSkills(skillIds)
-        validateNoExistingUserSkills(userId, skillIds)
+        Map<UUID, Skill> existingSkills = SkillAssociationSupport.loadBatch(
+                skillRepository, skills, "At least one user skill is required")
+        List<UserSkill> existingAssociations = userSkillRepository.findByUserId(userId) ?: []
+        SkillAssociationSupport.rejectExistingAssociations(
+                existingSkills.keySet(), existingAssociations.collect { it.id.skillId },
+                "Skill is already associated with user")
 
         List<UserSkill> userSkills = buildUserSkills(userId, skills, existingSkills)
         List<UserSkill> savedUserSkills = userSkillRepository.saveAll(userSkills)
@@ -103,43 +102,6 @@ class UserSkillService {
         UserSkillId id = new UserSkillId(userId: userId, skillId: skillId)
         return userSkillRepository.findByUserIdAndSkillId(id)
                 .orElseThrow { new EntityNotFoundException("User skill not found") }
-    }
-
-    private static void validateBatch(List<SkillAssociationCreateDTO> skills) {
-        if (skills == null || skills.isEmpty())
-            throw new IllegalArgumentException("At least one user skill is required")
-    }
-
-    private static Set<UUID> extractUniqueSkillIds(List<SkillAssociationCreateDTO> skills) {
-        Set<UUID> skillIds = new LinkedHashSet<>()
-        for (SkillAssociationCreateDTO skill : skills) {
-            if (skill.skillId() == null)
-                throw new IllegalArgumentException("Skill id cannot be null")
-            if (!skillIds.add(skill.skillId()))
-                throw new DuplicateResourceException("Duplicate skill id in batch: ${skill.skillId()}")
-        }
-        return skillIds
-    }
-
-    private Map<UUID, Skill> loadExistingSkills(Set<UUID> skillIds) {
-        List<Skill> foundSkills = skillRepository.findAllById(skillIds.toList()) ?: []
-        Map<UUID, Skill> skillsById = foundSkills.collectEntries { [it.id, it] }
-
-        for (UUID skillId : skillIds) {
-            if (!skillsById.containsKey(skillId))
-                throw new EntityNotFoundException("Skill not found with id: ${skillId}")
-        }
-        return skillsById
-    }
-
-    private void validateNoExistingUserSkills(UUID userId, Set<UUID> skillIds) {
-        List<UserSkill> existingUserSkills = userSkillRepository.findByUserId(userId) ?: []
-        Set<UUID> existingSkillIds = existingUserSkills.collect { it.id.skillId } as Set
-
-        for (UUID skillId : skillIds) {
-            if (existingSkillIds.contains(skillId))
-                throw new DuplicateResourceException("Skill is already associated with user")
-        }
     }
 
     private static List<UserSkill> buildUserSkills(UUID userId, List<SkillAssociationCreateDTO> skills,

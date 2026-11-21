@@ -41,9 +41,7 @@ class JobSkillService {
         if (jobSkillRepository.findByJobIdAndSkillId(id).isPresent())
             throw new DuplicateResourceException("Skill is already associated with job")
 
-        Skill skill = skillRepository.findById(jobSkillCreateDTO.skillId())
-                .orElseThrow { new EntityNotFoundException(
-                        "Skill not found with id: ${jobSkillCreateDTO.skillId()}") }
+        Skill skill = SkillAssociationSupport.loadSkill(skillRepository, jobSkillCreateDTO.skillId())
         JobSkill jobSkill = createSkill(id, companyId, jobSkillCreateDTO, skill)
 
         return JobSkillResponseDTO.fromDomain(jobSkillRepository.save(jobSkill))
@@ -51,11 +49,12 @@ class JobSkillService {
 
     @Transactional
     List<JobSkillResponseDTO> saveAll(UUID jobId, UUID companyId, List<SkillAssociationCreateDTO> skills) {
-        validateBatch(skills)
-
-        Set<UUID> skillIds = extractUniqueSkillIds(skills)
-        Map<UUID, Skill> existingSkills = loadExistingSkills(skillIds)
-        validateNoExistingJobSkills(jobId, skillIds)
+        Map<UUID, Skill> existingSkills = SkillAssociationSupport.loadBatch(
+                skillRepository, skills, "At least one job skill is required")
+        List<JobSkill> existingAssociations = jobSkillRepository.findByJobId(jobId) ?: []
+        SkillAssociationSupport.rejectExistingAssociations(
+                existingSkills.keySet(), existingAssociations.collect { it.id.skillId },
+                "Skill is already associated with job")
 
         List<JobSkill> jobSkills = buildJobSkills(jobId, companyId, skills, existingSkills)
         List<JobSkill> savedJobSkills = jobSkillRepository.saveAll(jobSkills)
@@ -88,43 +87,6 @@ class JobSkillService {
         JobSkillId id = new JobSkillId(jobId: jobId, skillId: skillId)
         return jobSkillRepository.findByJobIdAndSkillId(id)
                 .orElseThrow { new EntityNotFoundException("Job skill not found") }
-    }
-
-    private static void validateBatch(List<SkillAssociationCreateDTO> skills) {
-        if (skills == null || skills.isEmpty())
-            throw new IllegalArgumentException("At least one job skill is required")
-    }
-
-    private static Set<UUID> extractUniqueSkillIds(List<SkillAssociationCreateDTO> skills) {
-        Set<UUID> skillIds = new LinkedHashSet<>()
-        for (SkillAssociationCreateDTO skill : skills) {
-            if (skill.skillId() == null)
-                throw new IllegalArgumentException("Skill id cannot be null")
-            if (!skillIds.add(skill.skillId()))
-                throw new DuplicateResourceException("Duplicate skill id in batch: ${skill.skillId()}")
-        }
-        return skillIds
-    }
-
-    private Map<UUID, Skill> loadExistingSkills(Set<UUID> skillIds) {
-        List<Skill> foundSkills = skillRepository.findAllById(skillIds.toList()) ?: []
-        Map<UUID, Skill> skillsById = foundSkills.collectEntries { [it.id, it] }
-
-        for (UUID skillId : skillIds) {
-            if (!skillsById.containsKey(skillId))
-                throw new EntityNotFoundException("Skill not found with id: ${skillId}")
-        }
-        return skillsById
-    }
-
-    private void validateNoExistingJobSkills(UUID jobId, Set<UUID> skillIds) {
-        List<JobSkill> existingJobSkills = jobSkillRepository.findByJobId(jobId) ?: []
-        Set<UUID> existingSkillIds = existingJobSkills.collect { it.id.skillId } as Set
-
-        for (UUID skillId : skillIds) {
-            if (existingSkillIds.contains(skillId))
-                throw new DuplicateResourceException("Skill is already associated with job")
-        }
     }
 
     private static List<JobSkill> buildJobSkills(UUID jobId, UUID companyId,
