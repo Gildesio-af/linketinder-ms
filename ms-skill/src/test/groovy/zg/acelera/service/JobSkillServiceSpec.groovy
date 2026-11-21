@@ -6,7 +6,7 @@ import zg.acelera.domain.JobSkill
 import zg.acelera.domain.JobSkillId
 import zg.acelera.domain.Skill
 import zg.acelera.domain.SkillLevel
-import zg.acelera.dto.job_skill.JobSkillCreateDTO
+import zg.acelera.dto.skill.SkillAssociationCreateDTO
 import zg.acelera.dto.job_skill.JobSkillUpdateDTO
 import zg.acelera.repositories.job_skill.JobSkillRepository
 import zg.acelera.repositories.skill.SkillRepository
@@ -74,7 +74,7 @@ class JobSkillServiceSpec extends Specification {
 
     def "save creates and returns a job skill"() {
         given:
-        def dto = new JobSkillCreateDTO(skillId: skillId, level: SkillLevel.BEGINNER)
+        def dto = new SkillAssociationCreateDTO(skillId: skillId, level: SkillLevel.BEGINNER)
         def skill = new Skill(id: skillId, name: "Java")
         jobSkillRepository.findByJobIdAndSkillId(_ as JobSkillId) >> Optional.empty()
         skillRepository.findById(skillId) >> Optional.of(skill)
@@ -92,7 +92,7 @@ class JobSkillServiceSpec extends Specification {
 
     def "save rejects an already associated skill"() {
         given:
-        def dto = new JobSkillCreateDTO(skillId: skillId, level: SkillLevel.ADVANCED)
+        def dto = new SkillAssociationCreateDTO(skillId: skillId, level: SkillLevel.ADVANCED)
         jobSkillRepository.findByJobIdAndSkillId(_ as JobSkillId) >>
                 Optional.of(createJobSkill(SkillLevel.BEGINNER))
 
@@ -108,7 +108,7 @@ class JobSkillServiceSpec extends Specification {
 
     def "save throws when the skill does not exist"() {
         given:
-        def dto = new JobSkillCreateDTO(skillId: skillId, level: SkillLevel.BEGINNER)
+        def dto = new SkillAssociationCreateDTO(skillId: skillId, level: SkillLevel.BEGINNER)
         jobSkillRepository.findByJobIdAndSkillId(_ as JobSkillId) >> Optional.empty()
         skillRepository.findById(skillId) >> Optional.empty()
 
@@ -124,8 +124,8 @@ class JobSkillServiceSpec extends Specification {
     def "saveAll creates every skill and assigns the company id"() {
         given:
         UUID secondSkillId = UUID.randomUUID()
-        def java = new JobSkillCreateDTO(skillId: skillId, level: SkillLevel.BEGINNER)
-        def groovy = new JobSkillCreateDTO(skillId: secondSkillId, level: SkillLevel.ADVANCED)
+        def java = new SkillAssociationCreateDTO(skillId: skillId, level: SkillLevel.BEGINNER)
+        def groovy = new SkillAssociationCreateDTO(skillId: secondSkillId, level: SkillLevel.ADVANCED)
         def javaSkill = new Skill(id: skillId, name: "Java")
         def groovySkill = new Skill(id: secondSkillId, name: "Groovy")
         def savedJobSkills = [
@@ -166,7 +166,7 @@ class JobSkillServiceSpec extends Specification {
 
     def "saveAll rejects duplicate skill ids"() {
         given:
-        def dto = new JobSkillCreateDTO(skillId: skillId, level: SkillLevel.BEGINNER)
+        def dto = new SkillAssociationCreateDTO(skillId: skillId, level: SkillLevel.BEGINNER)
 
         when:
         service.saveAll(jobId, UUID.randomUUID(), [dto, dto])
@@ -181,8 +181,8 @@ class JobSkillServiceSpec extends Specification {
     def "saveAll is atomic when one skill does not exist"() {
         given:
         UUID missingSkillId = UUID.randomUUID()
-        def existing = new JobSkillCreateDTO(skillId: skillId, level: SkillLevel.BEGINNER)
-        def missing = new JobSkillCreateDTO(skillId: missingSkillId, level: SkillLevel.ADVANCED)
+        def existing = new SkillAssociationCreateDTO(skillId: skillId, level: SkillLevel.BEGINNER)
+        def missing = new SkillAssociationCreateDTO(skillId: missingSkillId, level: SkillLevel.ADVANCED)
         skillRepository.findAllById(_ as List<UUID>) >>
                 [new Skill(id: skillId, name: "Java")]
         jobSkillRepository.findByJobId(jobId) >> []

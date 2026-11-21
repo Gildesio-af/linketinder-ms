@@ -5,7 +5,7 @@ import org.springframework.security.core.Authentication
 import spock.lang.Specification
 import spock.lang.Subject
 import zg.acelera.domain.SkillLevel
-import zg.acelera.dto.job_skill.JobSkillCreateDTO
+import zg.acelera.dto.skill.SkillAssociationCreateDTO
 import zg.acelera.dto.job_skill.JobSkillResponseDTO
 import zg.acelera.service.JobSkillService
 
@@ -22,8 +22,8 @@ class JobSkillControllerSpec extends Specification {
         UUID jobId = UUID.randomUUID()
         UUID companyId = UUID.randomUUID()
         UUID skillId = UUID.randomUUID()
-        List<JobSkillCreateDTO> skills = [
-                new JobSkillCreateDTO(skillId: skillId, level: SkillLevel.ADVANCED)
+        List<SkillAssociationCreateDTO> skills = [
+                new SkillAssociationCreateDTO(skillId: skillId, level: SkillLevel.ADVANCED)
         ]
         List<JobSkillResponseDTO> saved = [
                 new JobSkillResponseDTO(

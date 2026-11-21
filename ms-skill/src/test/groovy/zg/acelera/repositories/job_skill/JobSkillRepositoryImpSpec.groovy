@@ -71,7 +71,7 @@ class JobSkillRepositoryImpSpec extends Specification {
         1 * jpaRepository.deleteById(id)
     }
 
-    private JobSkill createJobSkill(UUID jobId) {
+    private static JobSkill createJobSkill(UUID jobId) {
         UUID skillId = UUID.randomUUID()
         return new JobSkill(
                 id: new JobSkillId(jobId: jobId, skillId: skillId),
