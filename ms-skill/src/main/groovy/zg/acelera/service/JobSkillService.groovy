@@ -5,7 +5,7 @@ import org.springframework.transaction.annotation.Transactional
 import zg.acelera.domain.JobSkill
 import zg.acelera.domain.JobSkillId
 import zg.acelera.domain.Skill
-import zg.acelera.dto.job_skill.JobSkillCreateDTO
+import zg.acelera.dto.skill.SkillAssociationCreateDTO
 import zg.acelera.dto.job_skill.JobSkillResponseDTO
 import zg.acelera.dto.job_skill.JobSkillUpdateDTO
 import zg.acelera.repositories.job_skill.JobSkillRepository
@@ -35,7 +35,7 @@ class JobSkillService {
     }
 
     @Transactional
-    JobSkillResponseDTO save(UUID jobId, UUID companyId, JobSkillCreateDTO jobSkillCreateDTO) {
+    JobSkillResponseDTO save(UUID jobId, UUID companyId, SkillAssociationCreateDTO jobSkillCreateDTO) {
         JobSkillId id = new JobSkillId(jobId: jobId, skillId: jobSkillCreateDTO.skillId())
         if (jobSkillRepository.findByJobIdAndSkillId(id).isPresent())
             throw new IllegalArgumentException("Skill is already associated with job")
@@ -49,7 +49,7 @@ class JobSkillService {
     }
 
     @Transactional
-    List<JobSkillResponseDTO> saveAll(UUID jobId, UUID companyId, List<JobSkillCreateDTO> skills) {
+    List<JobSkillResponseDTO> saveAll(UUID jobId, UUID companyId, List<SkillAssociationCreateDTO> skills) {
         validateBatch(skills)
 
         Set<UUID> skillIds = extractUniqueSkillIds(skills)
@@ -89,14 +89,14 @@ class JobSkillService {
                 .orElseThrow { new EntityNotFoundException("Job skill not found") }
     }
 
-    private static void validateBatch(List<JobSkillCreateDTO> skills) {
+    private static void validateBatch(List<SkillAssociationCreateDTO> skills) {
         if (skills == null || skills.isEmpty())
             throw new IllegalArgumentException("At least one job skill is required")
     }
 
-    private static Set<UUID> extractUniqueSkillIds(List<JobSkillCreateDTO> skills) {
+    private static Set<UUID> extractUniqueSkillIds(List<SkillAssociationCreateDTO> skills) {
         Set<UUID> skillIds = new LinkedHashSet<>()
-        for (JobSkillCreateDTO skill : skills) {
+        for (SkillAssociationCreateDTO skill : skills) {
             if (skill.skillId() == null)
                 throw new IllegalArgumentException("Skill id cannot be null")
             if (!skillIds.add(skill.skillId()))
@@ -127,16 +127,16 @@ class JobSkillService {
     }
 
     private static List<JobSkill> buildJobSkills(UUID jobId, UUID companyId,
-                                                 List<JobSkillCreateDTO> skills,
+                                                 List<SkillAssociationCreateDTO> skills,
                                                  Map<UUID, Skill> skillsById) {
-        return skills.collect { JobSkillCreateDTO skill ->
+        return skills.collect { SkillAssociationCreateDTO skill ->
             JobSkillId id = new JobSkillId(jobId: jobId, skillId: skill.skillId())
             createSkill(id, companyId, skill, skillsById[skill.skillId()])
         }
     }
 
     private static JobSkill createSkill(JobSkillId id, UUID companyId,
-                                        JobSkillCreateDTO jobSkillCreateDTO, Skill skill) {
+                                        SkillAssociationCreateDTO jobSkillCreateDTO, Skill skill) {
         new JobSkill(
                 id: id,
                 companyId: companyId,

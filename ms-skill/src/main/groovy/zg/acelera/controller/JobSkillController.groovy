@@ -7,7 +7,7 @@ import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
-import zg.acelera.dto.job_skill.JobSkillCreateDTO
+import zg.acelera.dto.skill.SkillAssociationCreateDTO
 import zg.acelera.dto.job_skill.JobSkillResponseDTO
 import zg.acelera.dto.job_skill.JobSkillUpdateDTO
 import zg.acelera.service.JobSkillService
@@ -35,7 +35,7 @@ class JobSkillController {
     @PreAuthorize("hasRole('COMPANY')")
     @PostMapping
     ResponseEntity<JobSkillResponseDTO> save(@PathVariable("jobId") UUID jobId,
-                                             @Valid @RequestBody JobSkillCreateDTO jobSkillCreateDTO,
+                                             @Valid @RequestBody SkillAssociationCreateDTO jobSkillCreateDTO,
                                              Authentication auth) {
         UUID companyId = (UUID) auth.principal
         JobSkillResponseDTO savedJobSkill = jobSkillService.save(jobId, companyId, jobSkillCreateDTO)
@@ -50,7 +50,7 @@ class JobSkillController {
     @PreAuthorize("hasRole('COMPANY')")
     @PostMapping("/batch")
     ResponseEntity<List<JobSkillResponseDTO>> saveAll(@PathVariable("jobId") UUID jobId,
-                                                      @Valid @RequestBody List<JobSkillCreateDTO> skills,
+                                                      @Valid @RequestBody List<SkillAssociationCreateDTO> skills,
                                                       Authentication auth) {
         UUID companyId = (UUID) auth.principal
         return ResponseEntity.status(HttpStatus.CREATED)
