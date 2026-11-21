@@ -45,6 +45,19 @@ class JobSkillRepositoryImpSpec extends Specification {
         repository.save(jobSkill) == jobSkill
     }
 
+    def "saveAll delegates one batch to the JPA repository"() {
+        given:
+        def jobSkills = [createJobSkill(UUID.randomUUID()), createJobSkill(UUID.randomUUID())]
+        jpaRepository.saveAll(_ as Iterable) >> jobSkills
+
+        when:
+        def result = repository.saveAll(jobSkills)
+
+        then:
+        result == jobSkills
+        1 * jpaRepository.saveAll(_ as Iterable) >> jobSkills
+    }
+
     def "delete delegates to the JPA repository"() {
         given:
         def id = new JobSkillId(

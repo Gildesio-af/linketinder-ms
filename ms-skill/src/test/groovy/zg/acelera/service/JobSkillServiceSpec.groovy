@@ -119,6 +119,69 @@ class JobSkillServiceSpec extends Specification {
         0 * jobSkillRepository.save(_)
     }
 
+    def "saveAll creates every skill and assigns the company id"() {
+        given:
+        UUID companyId = UUID.randomUUID()
+        UUID secondSkillId = UUID.randomUUID()
+        def java = new JobSkillCreateDTO(skillId: skillId, level: SkillLevel.BEGINNER)
+        def groovy = new JobSkillCreateDTO(skillId: secondSkillId, level: SkillLevel.ADVANCED)
+        def javaSkill = new Skill(id: skillId, name: "Java")
+        def groovySkill = new Skill(id: secondSkillId, name: "Groovy")
+        skillRepository.findAllById([skillId, secondSkillId]) >> [javaSkill, groovySkill]
+        jobSkillRepository.findByJobId(jobId) >> []
+        jobSkillRepository.saveAll(_ as List<JobSkill>) >> { List<JobSkill> saved -> saved }
+
+        when:
+        def response = service.saveAll(jobId, companyId, [java, groovy])
+
+        then:
+        response*.jobId == [jobId, jobId]
+        response*.skillId == [skillId, secondSkillId]
+        response*.level == [SkillLevel.BEGINNER, SkillLevel.ADVANCED]
+    }
+
+    def "saveAll rejects an empty batch"() {
+        when:
+        service.saveAll(jobId, UUID.randomUUID(), [])
+
+        then:
+        IllegalArgumentException exception = thrown()
+        exception.message == "At least one job skill is required"
+        0 * jobSkillRepository._
+        0 * skillRepository._
+    }
+
+    def "saveAll rejects duplicate skill ids"() {
+        given:
+        def dto = new JobSkillCreateDTO(skillId: skillId, level: SkillLevel.BEGINNER)
+
+        when:
+        service.saveAll(jobId, UUID.randomUUID(), [dto, dto])
+
+        then:
+        IllegalArgumentException exception = thrown()
+        exception.message == "Duplicate skill id in batch: $skillId"
+        0 * jobSkillRepository._
+        0 * skillRepository._
+    }
+
+    def "saveAll is atomic when one skill does not exist"() {
+        given:
+        UUID missingSkillId = UUID.randomUUID()
+        def existing = new JobSkillCreateDTO(skillId: skillId, level: SkillLevel.BEGINNER)
+        def missing = new JobSkillCreateDTO(skillId: missingSkillId, level: SkillLevel.ADVANCED)
+        skillRepository.findAllById(_ as List<UUID>) >>
+                [new Skill(id: skillId, name: "Java")]
+        jobSkillRepository.findByJobId(jobId) >> []
+
+        when:
+        service.saveAll(jobId, UUID.randomUUID(), [existing, missing])
+
+        then:
+        thrown(EntityNotFoundException)
+        0 * jobSkillRepository.saveAll(_)
+    }
+
     def "update changes the skill level"() {
         given:
         def jobSkill = createJobSkill(SkillLevel.BEGINNER)
